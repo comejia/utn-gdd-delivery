@@ -506,9 +506,119 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_horario AS
+BEGIN
+	INSERT INTO G_DE_GESTION.horario(
+		horario_hora_apertura,
+		horario_hora_cierre,
+		horario_dia
+	)
+	SELECT DISTINCT
+		m.HORARIO_LOCAL_HORA_APERTURA,
+		m.HORARIO_LOCAL_HORA_CIERRE,
+		m.HORARIO_LOCAL_DIA
+	FROM gd_esquema.Maestra m
+	WHERE m.HORARIO_LOCAL_HORA_APERTURA IS NOT NULL
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_producto AS
+BEGIN
+	INSERT INTO G_DE_GESTION.producto(
+		producto_codigo,
+		producto_nombre,
+		producto_descripcion
+	)
+	SELECT DISTINCT
+		m.PRODUCTO_LOCAL_CODIGO,
+		m.PRODUCTO_LOCAL_NOMBRE,
+		m.PRODUCTO_LOCAL_DESCRIPCION
+	FROM gd_esquema.Maestra m
+	WHERE m.PRODUCTO_LOCAL_CODIGO IS NOT NULL
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_operador_reclamo AS
+BEGIN
+	INSERT INTO G_DE_GESTION.operador_reclamo(
+		operador_reclamo_nombre,
+		operador_reclamo_apellido,
+		operador_reclamo_dni,
+		operador_reclamo_telefono,
+		operador_reclamo_direccion,
+		operador_reclamo_mail,
+		operador_reclamo_fecha_nac
+	)
+	SELECT DISTINCT
+		m.OPERADOR_RECLAMO_NOMBRE,
+		m.OPERADOR_RECLAMO_APELLIDO,
+		m.OPERADOR_RECLAMO_DNI,
+		m.OPERADOR_RECLAMO_TELEFONO,
+		m.OPERADOR_RECLAMO_DIRECCION,
+		m.OPERADOR_RECLAMO_MAIL,
+		m.OPERADOR_RECLAMO_FECHA_NAC
+	FROM gd_esquema.Maestra m
+	WHERE m.OPERADOR_RECLAMO_DNI IS NOT NULL
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_usuario AS
+BEGIN
+	INSERT INTO G_DE_GESTION.usuario(
+		usuario_nombre,
+		usuario_apellido,
+		usuario_dni,
+		usuario_fecha_registro,
+		usuario_telefono,
+		usuario_mail,
+		usuario_fecha_nac
+	)
+	SELECT DISTINCT
+		m.USUARIO_NOMBRE,
+		m.USUARIO_APELLIDO,
+		m.USUARIO_DNI,
+		m.USUARIO_FECHA_REGISTRO,
+		m.USUARIO_TELEFONO,
+		m.USUARIO_MAIL,
+		m.USUARIO_FECHA_NAC
+	FROM gd_esquema.Maestra m
+	WHERE m.USUARIO_DNI IS NOT NULL
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_marca_tarjeta AS
+BEGIN
+	INSERT INTO G_DE_GESTION.marca_tarjeta(marca_tarjeta_descripcion)
+	SELECT DISTINCT m.MARCA_TARJETA 
+	FROM gd_esquema.Maestra m
+	WHERE m.MARCA_TARJETA IS NOT NULL
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_paquete AS
+BEGIN
+	INSERT INTO G_DE_GESTION.paquete(
+		tipo_paquete_id,
+		paquete_alto_max,
+		paquete_ancho_max,
+		paquete_largo_max,
+		paquete_peso_max,
+		paquete_precio
+	)
+	SELECT DISTINCT
+		tp.tipo_paquete_id,
+		m.PAQUETE_ALTO_MAX,
+		m.PAQUETE_ANCHO_MAX,
+		m.PAQUETE_LARGO_MAX,
+		m.PAQUETE_PESO_MAX,
+		m.PAQUETE_TIPO_PRECIO
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.tipo_paquete tp ON (tp.tipo_paquete_descripcion = m.PAQUETE_TIPO)
+END
+GO
 
 
--- SIN MIGRAR
+/*
 CREATE PROCEDURE G_DE_GESTION.migrar_pronvincias AS
 BEGIN
 	INSERT INTO LOS_MAGIOS.provincia  (provincia_nombre)
@@ -753,6 +863,7 @@ BEGIN
 	GROUP BY c.compra_numero, p.producto_codigo
 END
 GO
+*/
 
 -- Migracion
 BEGIN TRANSACTION
@@ -763,71 +874,32 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_tipo_medio_pago
 	EXECUTE G_DE_GESTION.migrar_tipo_direccion
 	EXECUTE G_DE_GESTION.migrar_tipo_cupon
-
-	EXECUTE G_DE_GESTION.migrar_pronvincias
-	EXECUTE G_DE_GESTION.migrar_localidades
-	EXECUTE G_DE_GESTION.migrar_clientes
-	EXECUTE G_DE_GESTION.migrar_proveedores
-	EXECUTE G_DE_GESTION.migrar_descuento_compra
-	EXECUTE G_DE_GESTION.migrar_categorias_productos
-	EXECUTE G_DE_GESTION.migrar_tipo_envio
-	EXECUTE G_DE_GESTION.migrar_envio 
-	EXECUTE G_DE_GESTION.migrar_tipo_envio_localidad
-	
-	EXECUTE G_DE_GESTION.migrar_tipo_medio_pago
-	EXECUTE G_DE_GESTION.migrar_medio_pago
-	EXECUTE G_DE_GESTION.migrar_variante
-	EXECUTE G_DE_GESTION.migrar_tipo_canal
-	EXECUTE G_DE_GESTION.migrar_canal
-	EXECUTE G_DE_GESTION.migrar_tipo_variante
-	EXECUTE G_DE_GESTION.migrar_venta
-	EXECUTE G_DE_GESTION.migrar_cupones
-	EXECUTE G_DE_GESTION.migrar_venta_cupon
-	EXECUTE G_DE_GESTION.migrar_venta_descuento
+	EXECUTE G_DE_GESTION.migrar_horario
 	EXECUTE G_DE_GESTION.migrar_producto
-	EXECUTE G_DE_GESTION.migrar_venta_producto
-	EXECUTE G_DE_GESTION.migrar_compra
-	EXECUTE G_DE_GESTION.migrar_compra_producto
+	EXECUTE G_DE_GESTION.migrar_operador_reclamo
+	EXECUTE G_DE_GESTION.migrar_usuario
+	EXECUTE G_DE_GESTION.migrar_marca_tarjeta
+	EXECUTE G_DE_GESTION.migrar_paquete
 COMMIT TRANSACTION
 GO
 
--- Eliminaciones para despues correr el test
-
+-- Eliminacion de FUNCTIONs y PROCEDUREs
+/*
 DROP FUNCTION G_DE_GESTION.obtener_provincia_codigo
 DROP FUNCTION G_DE_GESTION.obtener_localidad_codigo
-DROP FUNCTION G_DE_GESTION.obtener_categoria_codigo
-DROP FUNCTION G_DE_GESTION.obtener_tipo_envio_codigo
-DROP FUNCTION G_DE_GESTION.obtener_tipo_medio_pago_codigo
-DROP FUNCTION G_DE_GESTION.obtener_pago_codigo
-DROP FUNCTION G_DE_GESTION.obtener_tipo_variante_codigo
-DROP FUNCTION G_DE_GESTION.obtener_proveedor_codigo
-DROP FUNCTION G_DE_GESTION.obtener_medio_pago_codigo
+*/
 
-DROP PROCEDURE G_DE_GESTION.migrar_tipo_cupon
-DROP PROCEDURE G_DE_GESTION.migrar_pronvincias
-DROP PROCEDURE G_DE_GESTION.migrar_localidades
-DROP PROCEDURE G_DE_GESTION.migrar_clientes
-DROP PROCEDURE G_DE_GESTION.migrar_descuento_compra
-DROP PROCEDURE G_DE_GESTION.migrar_categorias_productos
-DROP PROCEDURE G_DE_GESTION.migrar_tipo_envio
-DROP PROCEDURE G_DE_GESTION.migrar_envio 
-DROP PROCEDURE G_DE_GESTION.migrar_tipo_envio_localidad
-DROP PROCEDURE G_DE_GESTION.migrar_tipo_descuento
+DROP PROCEDURE G_DE_GESTION.migrar_tipo_movilidad
+DROP PROCEDURE G_DE_GESTION.migrar_tipo_paquete
+DROP PROCEDURE G_DE_GESTION.migrar_tipo_local
+DROP PROCEDURE G_DE_GESTION.migrar_tipo_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_tipo_medio_pago
-DROP PROCEDURE G_DE_GESTION.migrar_medio_pago
-DROP PROCEDURE G_DE_GESTION.migrar_venta
-DROP PROCEDURE G_DE_GESTION.migrar_venta_descuento
-
-DROP PROCEDURE G_DE_GESTION.migrar_venta_cupon
-DROP PROCEDURE G_DE_GESTION.migrar_variante
-
-DROP PROCEDURE G_DE_GESTION.migrar_tipo_canal
-DROP PROCEDURE G_DE_GESTION.migrar_canal
-DROP PROCEDURE G_DE_GESTION.migrar_tipo_variante
-DROP PROCEDURE G_DE_GESTION.migrar_cupones
-DROP PROCEDURE G_DE_GESTION.migrar_compra
+DROP PROCEDURE G_DE_GESTION.migrar_tipo_direccion
+DROP PROCEDURE G_DE_GESTION.migrar_tipo_cupon
+DROP PROCEDURE G_DE_GESTION.migrar_horario
 DROP PROCEDURE G_DE_GESTION.migrar_producto
-DROP PROCEDURE G_DE_GESTION.migrar_venta_producto
-DROP PROCEDURE G_DE_GESTION.migrar_compra_producto
-
+DROP PROCEDURE G_DE_GESTION.migrar_operador_reclamo
+DROP PROCEDURE G_DE_GESTION.migrar_usuario
+DROP PROCEDURE G_DE_GESTION.migrar_marca_tarjeta
+DROP PROCEDURE G_DE_GESTION.migrar_paquete
 GO
