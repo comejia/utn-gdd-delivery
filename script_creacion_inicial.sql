@@ -10,38 +10,38 @@ GO
 -- Total tablas = 32
 
 -- Se eliminan las tablas si existen (para testeo y tener ambiente limpio)
-IF OBJECT_ID('G_DE_GESTION.provincia') IS NOT NULL DROP TABLE G_DE_GESTION.provincia
-IF OBJECT_ID('G_DE_GESTION.localidad') IS NOT NULL DROP TABLE G_DE_GESTION.localidad
-IF OBJECT_ID('G_DE_GESTION.tipo_movilidad') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_movilidad
-IF OBJECT_ID('G_DE_GESTION.repartidor') IS NOT NULL DROP TABLE G_DE_GESTION.repartidor
-IF OBJECT_ID('G_DE_GESTION.localidad_repartidor') IS NOT NULL DROP TABLE G_DE_GESTION.localidad_repartidor
-IF OBJECT_ID('G_DE_GESTION.tipo_direccion') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_direccion
-IF OBJECT_ID('G_DE_GESTION.direccion') IS NOT NULL DROP TABLE G_DE_GESTION.direccion
-IF OBJECT_ID('G_DE_GESTION.usuario') IS NOT NULL DROP TABLE G_DE_GESTION.usuario
-IF OBJECT_ID('G_DE_GESTION.direccion_usuario') IS NOT NULL DROP TABLE G_DE_GESTION.direccion_usuario
-IF OBJECT_ID('G_DE_GESTION.marca_tarjeta') IS NOT NULL DROP TABLE G_DE_GESTION.marca_tarjeta
-IF OBJECT_ID('G_DE_GESTION.tarjeta') IS NOT NULL DROP TABLE G_DE_GESTION.tarjeta
-IF OBJECT_ID('G_DE_GESTION.tipo_medio_pago') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_medio_pago
-IF OBJECT_ID('G_DE_GESTION.medio_pago') IS NOT NULL DROP TABLE G_DE_GESTION.medio_pago
-IF OBJECT_ID('G_DE_GESTION.tipo_local') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_local
-IF OBJECT_ID('G_DE_GESTION.categoria') IS NOT NULL DROP TABLE G_DE_GESTION.categoria
-IF OBJECT_ID('G_DE_GESTION.local') IS NOT NULL DROP TABLE G_DE_GESTION.local
-IF OBJECT_ID('G_DE_GESTION.horario') IS NOT NULL DROP TABLE G_DE_GESTION.horario
-IF OBJECT_ID('G_DE_GESTION.horario_local') IS NOT NULL DROP TABLE G_DE_GESTION.horario_local
-IF OBJECT_ID('G_DE_GESTION.producto') IS NOT NULL DROP TABLE G_DE_GESTION.producto
-IF OBJECT_ID('G_DE_GESTION.producto_local') IS NOT NULL DROP TABLE G_DE_GESTION.producto_local
-IF OBJECT_ID('G_DE_GESTION.pedido') IS NOT NULL DROP TABLE G_DE_GESTION.pedido
-IF OBJECT_ID('G_DE_GESTION.producto_pedido') IS NOT NULL DROP TABLE G_DE_GESTION.producto_pedido
-IF OBJECT_ID('G_DE_GESTION.tipo_cupon') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_cupon
-IF OBJECT_ID('G_DE_GESTION.cupon') IS NOT NULL DROP TABLE G_DE_GESTION.cupon
-IF OBJECT_ID('G_DE_GESTION.pedido_cupon') IS NOT NULL DROP TABLE G_DE_GESTION.pedido_cupon
+IF OBJECT_ID('G_DE_GESTION.cupon_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.cupon_reclamo
+IF OBJECT_ID('G_DE_GESTION.reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.reclamo
 IF OBJECT_ID('G_DE_GESTION.tipo_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_reclamo
 IF OBJECT_ID('G_DE_GESTION.operador_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.operador_reclamo
-IF OBJECT_ID('G_DE_GESTION.reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.reclamo
-IF OBJECT_ID('G_DE_GESTION.cupon_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.cupon_reclamo
-IF OBJECT_ID('G_DE_GESTION.tipo_paquete') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_paquete
-IF OBJECT_ID('G_DE_GESTION.paquete') IS NOT NULL DROP TABLE G_DE_GESTION.paquete
+IF OBJECT_ID('G_DE_GESTION.pedido_cupon') IS NOT NULL DROP TABLE G_DE_GESTION.pedido_cupon
+IF OBJECT_ID('G_DE_GESTION.cupon') IS NOT NULL DROP TABLE G_DE_GESTION.cupon
+IF OBJECT_ID('G_DE_GESTION.tipo_cupon') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_cupon
+IF OBJECT_ID('G_DE_GESTION.producto_pedido') IS NOT NULL DROP TABLE G_DE_GESTION.producto_pedido
+IF OBJECT_ID('G_DE_GESTION.producto_local') IS NOT NULL DROP TABLE G_DE_GESTION.producto_local
+IF OBJECT_ID('G_DE_GESTION.producto') IS NOT NULL DROP TABLE G_DE_GESTION.producto
+IF OBJECT_ID('G_DE_GESTION.pedido') IS NOT NULL DROP TABLE G_DE_GESTION.pedido
+IF OBJECT_ID('G_DE_GESTION.horario_local') IS NOT NULL DROP TABLE G_DE_GESTION.horario_local
+IF OBJECT_ID('G_DE_GESTION.local') IS NOT NULL DROP TABLE G_DE_GESTION.local
+IF OBJECT_ID('G_DE_GESTION.horario') IS NOT NULL DROP TABLE G_DE_GESTION.horario
+IF OBJECT_ID('G_DE_GESTION.categoria') IS NOT NULL DROP TABLE G_DE_GESTION.categoria
+IF OBJECT_ID('G_DE_GESTION.tipo_local') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_local
+IF OBJECT_ID('G_DE_GESTION.localidad_repartidor') IS NOT NULL DROP TABLE G_DE_GESTION.localidad_repartidor
 IF OBJECT_ID('G_DE_GESTION.envio_mensajeria') IS NOT NULL DROP TABLE G_DE_GESTION.envio_mensajeria
+IF OBJECT_ID('G_DE_GESTION.repartidor') IS NOT NULL DROP TABLE G_DE_GESTION.repartidor
+IF OBJECT_ID('G_DE_GESTION.tipo_movilidad') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_movilidad
+IF OBJECT_ID('G_DE_GESTION.paquete') IS NOT NULL DROP TABLE G_DE_GESTION.paquete
+IF OBJECT_ID('G_DE_GESTION.tipo_paquete') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_paquete
+IF OBJECT_ID('G_DE_GESTION.medio_pago') IS NOT NULL DROP TABLE G_DE_GESTION.medio_pago
+IF OBJECT_ID('G_DE_GESTION.tipo_medio_pago') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_medio_pago
+IF OBJECT_ID('G_DE_GESTION.tarjeta') IS NOT NULL DROP TABLE G_DE_GESTION.tarjeta
+IF OBJECT_ID('G_DE_GESTION.marca_tarjeta') IS NOT NULL DROP TABLE G_DE_GESTION.marca_tarjeta
+IF OBJECT_ID('G_DE_GESTION.direccion_usuario') IS NOT NULL DROP TABLE G_DE_GESTION.direccion_usuario
+IF OBJECT_ID('G_DE_GESTION.usuario') IS NOT NULL DROP TABLE G_DE_GESTION.usuario
+IF OBJECT_ID('G_DE_GESTION.direccion') IS NOT NULL DROP TABLE G_DE_GESTION.direccion
+IF OBJECT_ID('G_DE_GESTION.tipo_direccion') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_direccion
+IF OBJECT_ID('G_DE_GESTION.localidad') IS NOT NULL DROP TABLE G_DE_GESTION.localidad
+IF OBJECT_ID('G_DE_GESTION.provincia') IS NOT NULL DROP TABLE G_DE_GESTION.provincia
 GO
 
 
@@ -206,9 +206,9 @@ CREATE TABLE G_DE_GESTION.pedido(
 	pedido_direccion_envio NVARCHAR(255) NOT NULL,
 	pedido_precio_envio DECIMAL(18,2) NOT NULL,
 	pedido_propina DECIMAL(18,2) NOT NULL,
-	repartidor_id DECIMAL(18,0) REFERENCES G_DE_GESTION.repartidor
+	repartidor_id DECIMAL(18,0) REFERENCES G_DE_GESTION.repartidor,
 	pedido_tarifa_servicio DECIMAL(18,2) NOT NULL,
-	medio_pago_id DECIMAL(18,0) REFERENCES G_DE_GESTION.medio_pago
+	medio_pago_id DECIMAL(18,0) REFERENCES G_DE_GESTION.medio_pago,
 	pedido_total_productos DECIMAL(18,2) NOT NULL,
 	pedido_total_cupones DECIMAL(18,2) NOT NULL,
 	pedido_total_servicio DECIMAL(18,2) NOT NULL,
@@ -221,12 +221,13 @@ CREATE TABLE G_DE_GESTION.pedido(
 GO
 
 CREATE TABLE G_DE_GESTION.producto_pedido(
-	pedido_nro DECIMAL(18,0) REFERENCES G_DE_GESTION.pedido,
-	local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.producto_local(local_id),
-	producto_codigo NVARCHAR(50) REFERENCES G_DE_GESTION.producto_local(producto_codigo),
+	pedido_nro DECIMAL(18,0) REFERENCES G_DE_GESTION.pedido, -- PK, FK
+	local_id DECIMAL(18,0), -- PK, FK
+	producto_codigo NVARCHAR(50), -- PK, FK
 	producto_pedido_precio DECIMAL(18,2) NOT NULL,
 	producto_pedido_cantidad DECIMAL(18,0) NOT NULL,
-	PRIMARY KEY(pedido_nro, local_id, producto_codigo)
+	PRIMARY KEY(pedido_nro, local_id, producto_codigo),
+	FOREIGN KEY(local_id, producto_codigo) REFERENCES G_DE_GESTION.producto_local(local_id, producto_codigo)
 )
 GO
 
@@ -324,12 +325,12 @@ CREATE TABLE G_DE_GESTION.envio_mensajeria(
 	envio_mensajeria_precio_seguro DECIMAL(18,2) NOT NULL,
 	repartidor_id DECIMAL(18,0) REFERENCES G_DE_GESTION.repartidor,
 	envio_mensajeria_propina DECIMAL(18,2) NOT NULL,
-	medio_pago_id DECIMAL(18,0) REFERENCES G_DE_GESTION.medio_pago
+	medio_pago_id DECIMAL(18,0) REFERENCES G_DE_GESTION.medio_pago,
 	envio_mensajeria_total DECIMAL(18,2) NOT NULL,
 	envio_mensajeria_estado NVARCHAR(50) NOT NULL,
 	envio_mensajeria_tiempo_estimado DECIMAL(18,2) NOT NULL,
 	envio_mensajeria_fecha_entrega DATETIME2(3) NOT NULL,
-	envio_mensajeria_calificacion DECIMAL(18,0) NOT NULL
+	envio_mensajeria_calificacion DECIMAL(18,0) NOT NULL,
 	local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.localidad
 )
 GO
