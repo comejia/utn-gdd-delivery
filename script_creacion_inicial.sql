@@ -338,7 +338,7 @@ GO
 
 
 -- Funciones
---Funciones
+
 CREATE FUNCTION G_DE_GESTION.obtener_provincia_codigo (@provincia_descripcion VARCHAR(255))
 RETURNS DECIMAL(18,0)
 AS
@@ -750,6 +750,77 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_repartidor AS
+BEGIN
+	INSERT INTO G_DE_GESTION.repartidor(
+		repartidor_nombre,
+		repartidor_apellido,
+		repartidor_dni,
+		repartidor_telefono,
+		repartidor_direccion,
+		repartidor_email,
+		repartidor_fecha_nac,
+		tipo_movilidad_id
+	)
+	SELECT DISTINCT
+		m.REPARTIDOR_NOMBRE,
+		m.REPARTIDOR_APELLIDO,
+		m.REPARTIDOR_DNI,
+		m.REPARTIDOR_TELEFONO,
+		m.REPARTIDOR_DIRECION,
+		m.REPARTIDOR_EMAIL,
+		m.REPARTIDOR_FECHA_NAC,
+		tm.tipo_movilidad_id
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.tipo_movilidad tm ON (tm.tipo_movilidad_descripcion = m.REPARTIDOR_TIPO_MOVILIDAD)
+END
+GO
+
+-- NOTA: reeveer esta migracion
+CREATE PROCEDURE G_DE_GESTION.migrar_medio_pago AS
+BEGIN
+	INSERT INTO G_DE_GESTION.medio_pago(
+		tarjeta_nro,
+		tipo_medio_pago_id
+	)
+	SELECT DISTINCT
+		t.tarjeta_nro,
+		tmp.tipo_medio_pago_id
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.tarjeta t ON (t.tarjeta_nro = m.MEDIO_PAGO_NRO_TARJETA)
+	JOIN G_DE_GESTION.tipo_medio_pago tmp ON (tmp.tipo_medio_pago_descripcion = m.MEDIO_PAGO_TIPO)
+END
+GO
+
+/*CREATE PROCEDURE G_DE_GESTION.migrar_envio_mensajeria AS
+BEGIN
+	INSERT INTO G_DE_GESTION.envio_mensajeria(
+		envio_mensajeria_nro,
+		usuario_id,
+		envio_mensajeria_fecha,
+		envio_mensajeria_dir_orig,
+		envio_mensajeria_dir_dest,
+		envio_mensajeria_km,
+		paquete_id,
+		envio_mensajeria_valor_asegurado,
+		envio_mensajeria_observ,
+		envio_mensajeria_precio_envio,
+		envio_mensajeria_precio_seguro,
+		repartidor_id
+	)
+	SELECT DISTINCT
+		--G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION) as DIRECCION_ID,
+		d.direccion_id,
+		--G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) as USUARIO_ID
+		u.usuario_id
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.direccion d ON (d.direccion_descripcion = m.DIRECCION_USUARIO_DIRECCION)
+	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
+	WHERE m.DIRECCION_USUARIO_DIRECCION IS NOT NULL
+	--WHERE G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION) IS NOT NULL
+	--AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)  IS NOT NULL 
+END
+GO*/
 
 -- Migracion
 BEGIN TRANSACTION
@@ -773,6 +844,8 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_tarjeta
 	EXECUTE G_DE_GESTION.migrar_direcciones
 	EXECUTE G_DE_GESTION.migrar_direccion_usuario
+	EXECUTE G_DE_GESTION.migrar_repartidor
+	EXECUTE G_DE_GESTION.migrar_medio_pago
 COMMIT TRANSACTION
 GO
 
@@ -804,5 +877,7 @@ DROP PROCEDURE G_DE_GESTION.migrar_localidades
 DROP PROCEDURE G_DE_GESTION.migrar_tarjeta
 DROP PROCEDURE G_DE_GESTION.migrar_direcciones
 DROP PROCEDURE G_DE_GESTION.migrar_direccion_usuario
+DROP PROCEDURE G_DE_GESTION.migrar_repartidor
+DROP PROCEDURE G_DE_GESTION.migrar_medio_pago
 
 GO
