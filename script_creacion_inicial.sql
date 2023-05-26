@@ -404,9 +404,6 @@ BEGIN
 END
 
 
-
-
-
 -- Procedures
 
 CREATE PROCEDURE G_DE_GESTION.migrar_tipo_movilidad AS
@@ -587,44 +584,36 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE G_DE_GESTION.migrar_pronvincias AS
+CREATE PROCEDURE [G_DE_GESTION].migrar_pronvincias AS
 BEGIN
-	INSERT INTO G_DE_GESTION.provincia(provincia_descripcion)
-	SELECT DISTINCT m.DIRECCION_USUARIO_PROVINCIA
+	INSERT INTO G_DE_GESTION.provincia  (provincia_descripcion)
+	SELECT DISTINCT m. DIRECCION_USUARIO_PROVINCIA
 	FROM gd_esquema.Maestra m 
-	WHERE m.DIRECCION_USUARIO_PROVINCIA IS NOT NULL
+	WHERE m. DIRECCION_USUARIO_PROVINCIA IS NOT NULL
 	UNION
-	SELECT DISTINCT m.ENVIO_MENSAJERIA_PROVINCIA
+	SELECT DISTINCT m. ENVIO_MENSAJERIA_PROVINCIA
 	FROM gd_esquema.Maestra m 
-	WHERE m.ENVIO_MENSAJERIA_PROVINCIA IS NOT NULL
+	WHERE m. ENVIO_MENSAJERIA_PROVINCIA IS NOT NULL
 	UNION
-	SELECT DISTINCT m.LOCAL_PROVINCIA
+	SELECT DISTINCT m. LOCAL_PROVINCIA
 	FROM gd_esquema.Maestra m 
-	WHERE m.LOCAL_PROVINCIA IS NOT NULL
+	WHERE m. LOCAL_PROVINCIA IS NOT NULL
+	
 END
 GO
 
 CREATE PROCEDURE [G_DE_GESTION].migrar_localidades AS
 BEGIN
-	INSERT INTO G_DE_GESTION.localidad(
-		localidad_descripcion,
-		provincia_id
-	)
-	SELECT DISTINCT 
-		m.DIRECCION_USUARIO_LOCALIDAD,
-		G_DE_GESTION.obtener_provincia_codigo(m.DIRECCION_USUARIO_PROVINCIA)
+	INSERT INTO G_DE_GESTION.localidad (localidad_descripcion, provincia_id)
+	SELECT DISTINCT m.DIRECCION_USUARIO_LOCALIDAD as localidad_descripcion, G_DE_GESTION.obtener_provincia_codigo(m.DIRECCION_USUARIO_PROVINCIA) as provincia_id
 	FROM gd_esquema.Maestra m 
 	WHERE m.DIRECCION_USUARIO_LOCALIDAD IS NOT NULL
 	UNION 
-	SELECT DISTINCT 
-		m.ENVIO_MENSAJERIA_LOCALIDAD,
-		G_DE_GESTION.obtener_provincia_codigo(m.ENVIO_MENSAJERIA_PROVINCIA)
+	SELECT DISTINCT  m.ENVIO_MENSAJERIA_LOCALIDAD as localidad_descripcion, G_DE_GESTION.obtener_provincia_codigo(m.ENVIO_MENSAJERIA_PROVINCIA) as provincia_id
 	FROM gd_esquema.Maestra m 
 	WHERE m.ENVIO_MENSAJERIA_LOCALIDAD IS NOT NULL 
 	UNION 
-	SELECT DISTINCT 
-		m.LOCAL_LOCALIDAD,
-		G_DE_GESTION.obtener_provincia_codigo(m.LOCAL_PROVINCIA)
+	SELECT DISTINCT  m.LOCAL_LOCALIDAD as localidad_descripcion, G_DE_GESTION.obtener_provincia_codigo(m.LOCAL_PROVINCIA) as provincia_id
 	FROM gd_esquema.Maestra m 
 	WHERE m.LOCAL_LOCALIDAD IS NOT NULL 
 END
@@ -632,49 +621,30 @@ GO
 
 CREATE PROCEDURE [G_DE_GESTION].migrar_direcciones AS
 BEGIN
-	INSERT INTO G_DE_GESTION.direccion(
-		tipo_direccion_id,
-		direccion_descripcion, 
-		localidad_id
-	)
-	SELECT DISTINCT 
-		G_DE_GESTION.obtener_codigo_tipo_direccion(m.DIRECCION_USUARIO_NOMBRE),
-		m.DIRECCION_USUARIO_DIRECCION,
-		G_DE_GESTION.obtener_codigo_localidad(m.DIRECCION_USUARIO_LOCALIDAD)
+	INSERT INTO G_DE_GESTION.direccion(tipo_direccion_id, direccion_descripcion, localidad_id)
+	SELECT DISTINCT G_DE_GESTION.obtener_codigo_tipo_direccion(m.DIRECCION_USUARIO_NOMBRE) as TIPO_DIRECCION_ID, m.DIRECCION_USUARIO_DIRECCION as DIRECCION_DESCRIPCION, G_DE_GESTION.obtener_codigo_localidad(m.DIRECCION_USUARIO_LOCALIDAD) as LOCALIDAD_ID
 	FROM gd_esquema.Maestra m
-	WHERE m.DIRECCION_USUARIO_DIRECCION IS NOT NULL
+	WHERE DIRECCION_USUARIO_DIRECCION IS NOT NULL
 END
 GO
 
 CREATE PROCEDURE [G_DE_GESTION].migrar_direccion_usuario AS
 BEGIN
-	INSERT INTO G_DE_GESTION.direccion_usuario(
-		direccion_id,
-		usuario_id
-	)
-	SELECT DISTINCT 
-		G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION),
-		G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)
+	INSERT INTO G_DE_GESTION.direccion_usuario(direccion_id, usuario_id)
+	SELECT DISTINCT G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION) as DIRECCION_ID, G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) as USUARIO_ID
 	FROM gd_esquema.Maestra m
 	WHERE G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION) IS NOT NULL
-		AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) IS NOT NULL
+	AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)  IS NOT NULL
 END
 GO
 
 CREATE PROCEDURE [G_DE_GESTION].migrar_tarjeta AS
 BEGIN
-	INSERT INTO G_DE_GESTION.tarjeta(
-		tarjeta_nro,
-		marca_tarjeta_id,
-		usuario_id
-	)
-	SELECT DISTINCT 
-		m.MEDIO_PAGO_NRO_TARJETA,
-		G_DE_GESTION.obtener_marca_tarjeta(m.MARCA_TARJETA),
-		G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)
+	INSERT INTO G_DE_GESTION.tarjeta(tarjeta_nro, marca_tarjeta_id, usuario_id)
+	SELECT DISTINCT m.MEDIO_PAGO_NRO_TARJETA, G_DE_GESTION.obtener_marca_tarjeta(m.MARCA_TARJETA) as MARCA_TARJETA_ID, G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) as USUARIO_ID
 	FROM gd_esquema.Maestra m
 	WHERE G_DE_GESTION.obtener_marca_tarjeta(m.MARCA_TARJETA) IS NOT NULL
-		AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) IS NOT NULL
+	AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)  IS NOT NULL	
 END
 GO
 
@@ -696,7 +666,6 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_pronvincias
 	EXECUTE G_DE_GESTION.migrar_localidades
 	EXECUTE G_DE_GESTION.migrar_direcciones
-	EXECUTE G_DE_GESTION.migrar_usuarios
 	EXECUTE G_DE_GESTION.migrar_direccion_usuario
 	EXECUTE G_DE_GESTION.migrar_tarjeta
 	
@@ -727,7 +696,6 @@ DROP PROCEDURE G_DE_GESTION.migrar_paquete
 DROP PROCEDURE G_DE_GESTION.migrar_pronvincias
 DROP PROCEDURE G_DE_GESTION.migrar_localidades
 DROP PROCEDURE G_DE_GESTION.migrar_direcciones
-DROP PROCEDURE G_DE_GESTION.migrar_usuarios
 DROP PROCEDURE G_DE_GESTION.migrar_direccion_usuario
 DROP PROCEDURE G_DE_GESTION.migrar_tarjeta
 GO
