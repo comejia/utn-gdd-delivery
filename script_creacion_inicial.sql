@@ -331,7 +331,7 @@ CREATE TABLE G_DE_GESTION.envio_mensajeria(
 	envio_mensajeria_tiempo_estimado DECIMAL(18,2) NOT NULL,
 	envio_mensajeria_fecha_entrega DATETIME2(3) NOT NULL,
 	envio_mensajeria_calificacion DECIMAL(18,0) NOT NULL,
-	local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.localidad
+	localidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.localidad
 )
 GO
 
@@ -792,7 +792,7 @@ BEGIN
 END
 GO
 
-/*CREATE PROCEDURE G_DE_GESTION.migrar_envio_mensajeria AS
+CREATE PROCEDURE G_DE_GESTION.migrar_envio_mensajeria AS
 BEGIN
 	INSERT INTO G_DE_GESTION.envio_mensajeria(
 		envio_mensajeria_nro,
@@ -806,21 +806,55 @@ BEGIN
 		envio_mensajeria_observ,
 		envio_mensajeria_precio_envio,
 		envio_mensajeria_precio_seguro,
-		repartidor_id
+		repartidor_id,
+		envio_mensajeria_propina,
+		medio_pago_id,
+		envio_mensajeria_total,
+		envio_mensajeria_estado,
+		envio_mensajeria_tiempo_estimado,
+		envio_mensajeria_fecha_entrega,
+		envio_mensajeria_calificacion,
+		localidad_id
 	)
 	SELECT DISTINCT
-		--G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION) as DIRECCION_ID,
-		d.direccion_id,
-		--G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) as USUARIO_ID
-		u.usuario_id
+		m.ENVIO_MENSAJERIA_NRO,
+		u.usuario_id,
+		m.ENVIO_MENSAJERIA_FECHA,
+		m.ENVIO_MENSAJERIA_DIR_ORIG,
+		m.ENVIO_MENSAJERIA_DIR_DEST,
+		m.ENVIO_MENSAJERIA_KM,
+		p_t.paquete_id,
+		m.ENVIO_MENSAJERIA_VALOR_ASEGURADO,
+		m.ENVIO_MENSAJERIA_OBSERV,
+		m.ENVIO_MENSAJERIA_PRECIO_ENVIO,
+		m.ENVIO_MENSAJERIA_PRECIO_SEGURO,
+		r.repartidor_id,
+		m.ENVIO_MENSAJERIA_PROPINA,
+		(SELECT mp.medio_pago_id FROM G_DE_GESTION.medio_pago mp
+			JOIN G_DE_GESTION.tipo_medio_pago tmp ON (tmp.tipo_medio_pago_id = mp.tipo_medio_pago_id)
+			WHERE mp.tarjeta_nro = m.MEDIO_PAGO_NRO_TARJETA AND tmp.tipo_medio_pago_descripcion = m.MEDIO_PAGO_TIPO
+		) as medio_pago_id,
+		m.ENVIO_MENSAJERIA_TOTAL,
+		m.ENVIO_MENSAJERIA_ESTADO,
+		m.ENVIO_MENSAJERIA_TIEMPO_ESTIMADO,
+		m.ENVIO_MENSAJERIA_FECHA_ENTREGA,
+		m.ENVIO_MENSAJERIA_CALIFICACION,
+		(SELECT l.localidad_id FROM G_DE_GESTION.localidad l
+			JOIN G_DE_GESTION.provincia p ON (p.provincia_id = l.provincia_id)
+			WHERE l.localidad_descripcion = m.ENVIO_MENSAJERIA_LOCALIDAD AND p.provincia_descripcion = m.ENVIO_MENSAJERIA_PROVINCIA
+		) as localidad_id
 	FROM gd_esquema.Maestra m
-	JOIN G_DE_GESTION.direccion d ON (d.direccion_descripcion = m.DIRECCION_USUARIO_DIRECCION)
 	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
-	WHERE m.DIRECCION_USUARIO_DIRECCION IS NOT NULL
-	--WHERE G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION) IS NOT NULL
-	--AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)  IS NOT NULL 
+	JOIN (SELECT 
+				p.paquete_id,
+				tp.tipo_paquete_descripcion 
+		  FROM G_DE_GESTION.paquete p
+		  JOIN G_DE_GESTION.tipo_paquete tp ON (tp.tipo_paquete_id = p.tipo_paquete_id)
+		 ) p_t ON (p_t.tipo_paquete_descripcion = m.PAQUETE_TIPO)
+	JOIN G_DE_GESTION.repartidor r ON (r.repartidor_dni = m.REPARTIDOR_DNI)
+	WHERE m.ENVIO_MENSAJERIA_NRO IS NOT NULL
 END
-GO*/
+GO
 
 -- Migracion
 BEGIN TRANSACTION
@@ -846,6 +880,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_direccion_usuario
 	EXECUTE G_DE_GESTION.migrar_repartidor
 	EXECUTE G_DE_GESTION.migrar_medio_pago
+	EXECUTE G_DE_GESTION.migrar_envio_mensajeria
 COMMIT TRANSACTION
 GO
 
@@ -879,5 +914,5 @@ DROP PROCEDURE G_DE_GESTION.migrar_direcciones
 DROP PROCEDURE G_DE_GESTION.migrar_direccion_usuario
 DROP PROCEDURE G_DE_GESTION.migrar_repartidor
 DROP PROCEDURE G_DE_GESTION.migrar_medio_pago
-
+DROP PROCEDURE G_DE_GESTION.migrar_envio_mensajeria
 GO
