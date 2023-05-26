@@ -337,9 +337,8 @@ GO
 
 
 
-/*
 -- Funciones
-
+--Funciones
 CREATE FUNCTION G_DE_GESTION.obtener_provincia_codigo (@provincia_descripcion VARCHAR(255))
 RETURNS DECIMAL(18,0)
 AS
@@ -350,91 +349,62 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION G_DE_GESTION.obtener_localidad_codigo (@localidad_descripcion VARCHAR(255), @localidad_codigo_postal DECIMAL(18,0), @provincia_descripcion VARCHAR(255))
+CREATE FUNCTION G_DE_GESTION.obtener_codigo_localidad (@localidad_descripcion VARCHAR(255))
 RETURNS DECIMAL(18,0)
 AS
 BEGIN
 	DECLARE @codigo_obtenido DECIMAL
-	SELECT @codigo_obtenido = l.localidad_id FROM G_DE_GESTION.localidad l 
-	WHERE l.localidad_descripcion = @localidad_descripcion 
-		AND l.localidad_codigo_postal = @localidad_codigo_postal 
-		AND l.provincia_id = G_DE_GESTION.obtener_provincia_codigo(@provincia_descripcion)
+	SELECT @codigo_obtenido = l.localidad_id FROM G_DE_GESTION.localidad l WHERE l.localidad_descripcion = @localidad_descripcion;
 	RETURN @codigo_obtenido
 END
 GO
 
-CREATE FUNCTION G_DE_GESTION.obtener_categoria_codigo (@categoria_producto_tipo VARCHAR(255))
+
+CREATE FUNCTION G_DE_GESTION.obtener_codigo_tipo_direccion (@tipo_direccion_descripcion VARCHAR(50))
 RETURNS DECIMAL(18,0)
 AS
 BEGIN
 	DECLARE @codigo_obtenido DECIMAL
-	SELECT @codigo_obtenido = cp.categoria_producto_codigo FROM G_DE_GESTION.pedido_cupon cp WHERE cp.categoria_producto_tipo = @categoria_producto_tipo;
+	SELECT @codigo_obtenido = td.tipo_direccion_id FROM G_DE_GESTION.tipo_direccion td WHERE td.tipo_direccion_descripcion = @tipo_direccion_descripcion;
 	RETURN @codigo_obtenido
 END
 GO
 
-CREATE FUNCTION G_DE_GESTION.obtener_tipo_envio_codigo (@venta_medio_envio VARCHAR(255))
+CREATE FUNCTION G_DE_GESTION.obtener_codigo_direccion(@direccion_descripcion VARCHAR(50))
 RETURNS DECIMAL(18,0)
 AS
 BEGIN
 	DECLARE @codigo_obtenido DECIMAL
-	SELECT @codigo_obtenido = te.tipo_envio_codigo FROM G_DE_GESTION.horario_local te WHERE te.tipo_envio_detalle LIKE @venta_medio_envio;
+	SELECT @codigo_obtenido = d.direccion_id FROM G_DE_GESTION.direccion d WHERE d.direccion_descripcion = @direccion_descripcion;
 	RETURN @codigo_obtenido
 END
 GO
 
-CREATE FUNCTION G_DE_GESTION.obtener_tipo_medio_pago_codigo (@venta_medio_pago_detalle NVARCHAR(255))
+CREATE FUNCTION G_DE_GESTION.obtener_codigo_usuario(@usuario_nombre VARCHAR(255), @usuario_apellido VARCHAR(255), @usuario_dni DECIMAL(18,0))
 RETURNS DECIMAL(18,0)
 AS
 BEGIN
 	DECLARE @codigo_obtenido DECIMAL
-	SELECT @codigo_obtenido = tmp.tipo_medio_pago_codigo FROM G_DE_GESTION.horario_local tmp WHERE tmp.tipo_medio_pago_Detalle LIKE @venta_medio_pago_detalle;
+	SELECT @codigo_obtenido = u.usuario_id FROM G_DE_GESTION.usuario u 
+	WHERE u.usuario_nombre = @usuario_nombre
+	AND u.usuario_apellido = @usuario_apellido
+	AND u.usuario_dni = @usuario_dni;
+	
 	RETURN @codigo_obtenido
 END
 GO
 
-CREATE FUNCTION G_DE_GESTION.obtener_pago_codigo (@medio_pago_costo DECIMAL(18,2), @medio_pago_detalle NVARCHAR(255))
+CREATE FUNCTION G_DE_GESTION.obtener_marca_tarjeta(@marca_tarjeta_descripcion VARCHAR(100))
 RETURNS DECIMAL(18,0)
 AS
 BEGIN
 	DECLARE @codigo_obtenido DECIMAL
-	SELECT @codigo_obtenido = mp.tipo_medio_pago_codigo
-	FROM G_DE_GESTION.medio_pago mp JOIN G_DE_GESTION.horario_local tmp ON mp.tipo_medio_pago_codigo = tmp.tipo_medio_pago_codigo
-	WHERE mp.medio_pago_costo = @medio_pago_costo AND tmp.tipo_medio_pago_Detalle = @medio_pago_detalle
+	SELECT @codigo_obtenido = mt.marca_tarjeta_id FROM G_DE_GESTION.marca_tarjeta mt WHERE mt.marca_tarjeta_descripcion = @marca_tarjeta_descripcion;
 	RETURN @codigo_obtenido
 END
-GO
-
-CREATE FUNCTION G_DE_GESTION.obtener_tipo_variante_codigo (@tipo_variante_detalle nvarchar(50))
-RETURNS DECIMAL(18,0)
-AS
-BEGIN
-    DECLARE @codigo_obtenido DECIMAL
-    SELECT @codigo_obtenido = tp.tipo_variante_codigo FROM G_DE_GESTION.tipo_cupon tp WHERE tp.tipo_variante_detalle = @tipo_variante_detalle
-    RETURN @codigo_obtenido
-END
-GO
 
 
-CREATE FUNCTION G_DE_GESTION.obtener_medio_pago_codigo (@venta_medio_pago_detalle NVARCHAR(255))
-RETURNS DECIMAL(18,0)
-AS
-BEGIN
-    DECLARE @codigo_obtenido DECIMAL
-    SELECT @codigo_obtenido = mp.medio_pago_codigo FROM G_DE_GESTION.medio_pago mp WHERE G_DE_GESTION.obtener_tipo_medio_pago_codigo(@venta_medio_pago_detalle) = mp.tipo_medio_pago_codigo;
-    RETURN @codigo_obtenido
-END
-GO
 
-CREATE FUNCTION G_DE_GESTION.obtener_proveedor_codigo (@proveedor_cuit nvarchar(50))
-RETURNS DECIMAL(18,0)
-AS
-BEGIN
-    DECLARE @codigo_obtenido DECIMAL
-    SELECT @codigo_obtenido = p.proveedor_codigo FROM G_DE_GESTION.repartidor p WHERE p.proveedor_cuit = @proveedor_cuit
-    RETURN @codigo_obtenido
-END
-GO*/
 
 
 -- Procedures
@@ -617,253 +587,96 @@ BEGIN
 END
 GO
 
-
-/*
 CREATE PROCEDURE G_DE_GESTION.migrar_pronvincias AS
 BEGIN
-	INSERT INTO LOS_MAGIOS.provincia  (provincia_nombre)
-	SELECT DISTINCT m.CLIENTE_PROVINCIA
+	INSERT INTO G_DE_GESTION.provincia(provincia_descripcion)
+	SELECT DISTINCT m.DIRECCION_USUARIO_PROVINCIA
 	FROM gd_esquema.Maestra m 
-	WHERE m.CLIENTE_PROVINCIA IS NOT NULL
+	WHERE m.DIRECCION_USUARIO_PROVINCIA IS NOT NULL
+	UNION
+	SELECT DISTINCT m.ENVIO_MENSAJERIA_PROVINCIA
+	FROM gd_esquema.Maestra m 
+	WHERE m.ENVIO_MENSAJERIA_PROVINCIA IS NOT NULL
+	UNION
+	SELECT DISTINCT m.LOCAL_PROVINCIA
+	FROM gd_esquema.Maestra m 
+	WHERE m.LOCAL_PROVINCIA IS NOT NULL
+END
+GO
+
+CREATE PROCEDURE [G_DE_GESTION].migrar_localidades AS
+BEGIN
+	INSERT INTO G_DE_GESTION.localidad(
+		localidad_descripcion,
+		provincia_id
+	)
+	SELECT DISTINCT 
+		m.DIRECCION_USUARIO_LOCALIDAD,
+		G_DE_GESTION.obtener_provincia_codigo(m.DIRECCION_USUARIO_PROVINCIA)
+	FROM gd_esquema.Maestra m 
+	WHERE m.DIRECCION_USUARIO_LOCALIDAD IS NOT NULL
 	UNION 
-	SELECT DISTINCT  m.PROVEEDOR_PROVINCIA
+	SELECT DISTINCT 
+		m.ENVIO_MENSAJERIA_LOCALIDAD,
+		G_DE_GESTION.obtener_provincia_codigo(m.ENVIO_MENSAJERIA_PROVINCIA)
 	FROM gd_esquema.Maestra m 
-	WHERE m.PROVEEDOR_PROVINCIA IS NOT NULL 
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_localidades AS
-BEGIN
-	INSERT INTO G_DE_GESTION.localidad (localidad_descripcion, localidad_codigo_postal, provincia_id)
-	SELECT DISTINCT m.CLIENTE_LOCALIDAD as localidad_descripcion, m.CLIENTE_CODIGO_POSTAL as localidad_codigo_postal, G_DE_GESTION.obtener_provincia_codigo(m.CLIENTE_PROVINCIA) as provincia_id
-	FROM gd_esquema.Maestra m 
-	WHERE m.CLIENTE_LOCALIDAD IS NOT NULL
+	WHERE m.ENVIO_MENSAJERIA_LOCALIDAD IS NOT NULL 
 	UNION 
-	SELECT DISTINCT  m.PROVEEDOR_LOCALIDAD, m.PROVEEDOR_CODIGO_POSTAL, G_DE_GESTION.obtener_provincia_codigo(m.PROVEEDOR_PROVINCIA) as provincia_id
+	SELECT DISTINCT 
+		m.LOCAL_LOCALIDAD,
+		G_DE_GESTION.obtener_provincia_codigo(m.LOCAL_PROVINCIA)
 	FROM gd_esquema.Maestra m 
-	WHERE m.PROVEEDOR_LOCALIDAD IS NOT NULL 
+	WHERE m.LOCAL_LOCALIDAD IS NOT NULL 
 END
 GO
 
-CREATE PROCEDURE G_DE_GESTION.migrar_clientes AS
+CREATE PROCEDURE [G_DE_GESTION].migrar_direcciones AS
 BEGIN
-	INSERT INTO G_DE_GESTION.reclamo(cliente_dni,
-	cliente_nombre, cliente_apellido, cliente_direccion, cliente_telefono, cliente_mail,
-	cliente_fecha_nac, localidad_id)
-	SELECT DISTINCT CLIENTE_DNI,CLIENTE_NOMBRE ,CLIENTE_APELLIDO, CLIENTE_DIRECCION, CLIENTE_TELEFONO,
-	CLIENTE_MAIL, CLIENTE_FECHA_NAC, G_DE_GESTION.obtener_localidad_codigo(CLIENTE_LOCALIDAD, CLIENTE_CODIGO_POSTAL, CLIENTE_PROVINCIA) FROM gd_esquema.Maestra m
-	WHERE CLIENTE_DNI IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_proveedores AS
-BEGIN
-	INSERT INTO G_DE_GESTION.repartidor (proveedor_cuit, proveedor_domicilio, proveedor_mail, proveedor_razon_social, localidad_id)
-	SELECT DISTINCT m.PROVEEDOR_CUIT, m.PROVEEDOR_DOMICILIO, m.PROVEEDOR_MAIL, m.PROVEEDOR_RAZON_SOCIAL,
-							G_DE_GESTION.obtener_localidad_codigo(PROVEEDOR_LOCALIDAD, PROVEEDOR_CODIGO_POSTAL, PROVEEDOR_PROVINCIA)
-	FROM gd_esquema.Maestra m WHERE m.PROVEEDOR_CUIT IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_descuento_compra AS
-BEGIN
-	INSERT INTO G_DE_GESTION.envio_mensajeria (descuento_compra_codigo, descuento_compra_valor)
-	SELECT DISTINCT m.DESCUENTO_COMPRA_CODIGO, m.DESCUENTO_COMPRA_VALOR
-	FROM gd_esquema.Maestra m WHERE m.DESCUENTO_COMPRA_CODIGO IS NOT NULL AND m.DESCUENTO_COMPRA_VALOR IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_categorias_productos AS
-BEGIN
-	INSERT INTO G_DE_GESTION.pedido_cupon (categoria_producto_tipo)
-	SELECT DISTINCT m.PRODUCTO_CATEGORIA 
-	FROM gd_esquema.Maestra m WHERE m.PRODUCTO_CATEGORIA IS NOT NULL 
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_tipo_canal AS
-BEGIN
-    INSERT INTO G_DE_GESTION.operador_reclamo(tipo_canal_detalle)
-    SELECT distinct m.VENTA_CANAL 
-    FROM gd_esquema.Maestra m 
-    WHERE m.VENTA_CANAL IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_canal AS
-BEGIN
-	INSERT INTO G_DE_GESTION.tipo_reclamo(tipo_canal_codigo, canal_costo)
-	SELECT distinct t.tipo_canal_codigo, m.VENTA_CANAL_COSTO
-	FROM gd_esquema.Maestra m join G_DE_GESTION.operador_reclamo t on t.tipo_canal_detalle = m.VENTA_CANAL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_tipo_envio AS
-BEGIN
-	INSERT INTO G_DE_GESTION.horario_local (tipo_envio_detalle)
-	SELECT DISTINCT m.VENTA_MEDIO_ENVIO FROM gd_esquema.Maestra m WHERE m.VENTA_MEDIO_ENVIO IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_envio AS
-BEGIN
-	INSERT INTO G_DE_GESTION.tarjeta (envio_precio, tipo_envio_codigo)
-	SELECT DISTINCT m.VENTA_ENVIO_PRECIO, G_DE_GESTION.obtener_tipo_envio_codigo(m.VENTA_MEDIO_ENVIO) as tipo_envio_codigo 
+	INSERT INTO G_DE_GESTION.direccion(
+		tipo_direccion_id,
+		direccion_descripcion, 
+		localidad_id
+	)
+	SELECT DISTINCT 
+		G_DE_GESTION.obtener_codigo_tipo_direccion(m.DIRECCION_USUARIO_NOMBRE),
+		m.DIRECCION_USUARIO_DIRECCION,
+		G_DE_GESTION.obtener_codigo_localidad(m.DIRECCION_USUARIO_LOCALIDAD)
 	FROM gd_esquema.Maestra m
-	WHERE m.VENTA_MEDIO_ENVIO IS NOT NULL
+	WHERE m.DIRECCION_USUARIO_DIRECCION IS NOT NULL
 END
 GO
 
---- dudoso. 
-CREATE PROCEDURE G_DE_GESTION.migrar_tipo_envio_localidad AS
+CREATE PROCEDURE [G_DE_GESTION].migrar_direccion_usuario AS
 BEGIN
-	INSERT INTO G_DE_GESTION.usuario (localidad_id, tipo_envio_codigo)
-	SELECT DISTINCT G_DE_GESTION.obtener_localidad_codigo(m.CLIENTE_LOCALIDAD, m.CLIENTE_CODIGO_POSTAL, m.CLIENTE_PROVINCIA )as localidad_id, G_DE_GESTION.obtener_tipo_envio_codigo(m.VENTA_MEDIO_ENVIO) as tipo_envio_codigo
+	INSERT INTO G_DE_GESTION.direccion_usuario(
+		direccion_id,
+		usuario_id
+	)
+	SELECT DISTINCT 
+		G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION),
+		G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)
 	FROM gd_esquema.Maestra m
-	WHERE m.CLIENTE_LOCALIDAD IS NOT NULL AND m.VENTA_MEDIO_ENVIO IS NOT NULL
+	WHERE G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION) IS NOT NULL
+		AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) IS NOT NULL
 END
 GO
 
-
-CREATE PROCEDURE G_DE_GESTION.migrar_tipo_descuento AS
+CREATE PROCEDURE [G_DE_GESTION].migrar_tarjeta AS
 BEGIN
-	INSERT INTO G_DE_GESTION.cupon_reclamo (tipo_descuento_detalle)
-	SELECT DISTINCT VENTA_DESCUENTO_CONCEPTO FROM gd_esquema.Maestra WHERE VENTA_DESCUENTO_CONCEPTO IS NOT NULL
-END
-GO
-
-
-CREATE PROCEDURE G_DE_GESTION.migrar_tipo_medio_pago AS
-BEGIN 
-	INSERT INTO G_DE_GESTION.horario_local(tipo_medio_pago_Detalle)
-	SELECT DISTINCT VENTA_MEDIO_PAGO FROM gd_esquema.Maestra WHERE VENTA_MEDIO_PAGO IS NOT NULL
-	UNION SELECT DISTINCT COMPRA_MEDIO_PAGO FROM gd_esquema.Maestra WHERE COMPRA_MEDIO_PAGO IS NOT NULL
-END
-GO
-
-
-
-CREATE PROCEDURE G_DE_GESTION.migrar_medio_pago AS
-BEGIN
-	INSERT INTO G_DE_GESTION.medio_pago (medio_pago_costo, tipo_medio_pago_codigo)
-	SELECT DISTINCT m.VENTA_MEDIO_PAGO_COSTO, G_DE_GESTION.obtener_tipo_medio_pago_codigo(m.VENTA_MEDIO_PAGO) as tipo_medio_pago_codigo
+	INSERT INTO G_DE_GESTION.tarjeta(
+		tarjeta_nro,
+		marca_tarjeta_id,
+		usuario_id
+	)
+	SELECT DISTINCT 
+		m.MEDIO_PAGO_NRO_TARJETA,
+		G_DE_GESTION.obtener_marca_tarjeta(m.MARCA_TARJETA),
+		G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)
 	FROM gd_esquema.Maestra m
-	WHERE m.VENTA_MEDIO_PAGO_COSTO IS NOT NULL
-	UNION 
-	SELECT DISTINCT m.VENTA_MEDIO_PAGO_COSTO, G_DE_GESTION.obtener_tipo_medio_pago_codigo(m.COMPRA_MEDIO_PAGO) as tipo_medio_pago_codigo 
-	FROM gd_esquema.Maestra m
-	WHERE m.VENTA_MEDIO_PAGO_COSTO IS NULL
-
+	WHERE G_DE_GESTION.obtener_marca_tarjeta(m.MARCA_TARJETA) IS NOT NULL
+		AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) IS NOT NULL
 END
 GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_tipo_variante AS
-BEGIN
-    INSERT INTO G_DE_GESTION.tipo_cupon(tipo_variante_detalle) 
-    SELECT distinct m.PRODUCTO_TIPO_VARIANTE
-    FROM gd_esquema.Maestra m 
-    WHERE m.PRODUCTO_TIPO_VARIANTE IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_variante AS
-BEGIN
-    INSERT INTO G_DE_GESTION.local (variante_codigo, tipo_variante_codigo,variante_descripcion) 
-    SELECT distinct m.PRODUCTO_VARIANTE_CODIGO, G_DE_GESTION.obtener_tipo_variante_codigo(m.PRODUCTO_TIPO_VARIANTE), m.PRODUCTO_VARIANTE
-    FROM gd_esquema.Maestra m 
-    WHERE m.PRODUCTO_VARIANTE_CODIGO IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_venta AS
-BEGIN
-	INSERT INTO G_DE_GESTION.marca_tarjeta (venta_codigo, venta_fecha, venta_total, cliente_codigo, canal_codigo, medio_pago_codigo, envio_codigo)
-	SELECT DISTINCT m.VENTA_CODIGO, m.VENTA_FECHA, m.VENTA_TOTAL, c.cliente_codigo, tipo_reclamo.canal_codigo,
-		mp.medio_pago_codigo, en.envio_codigo
-	FROM gd_esquema.Maestra m JOIN G_DE_GESTION.reclamo c
-			ON c.cliente_nombre = m.CLIENTE_NOMBRE AND c.cliente_dni = m.CLIENTE_DNI 
-			AND c.cliente_apellido = m.CLIENTE_APELLIDO AND c.cliente_telefono = m.CLIENTE_TELEFONO
-		JOIN G_DE_GESTION.operador_reclamo tc ON tc.tipo_canal_detalle = m.VENTA_CANAL
-		JOIN G_DE_GESTION.tipo_reclamo ON tipo_reclamo.canal_codigo = tc.tipo_canal_codigo
-		JOIN G_DE_GESTION.horario_local tpe ON tpe.tipo_envio_detalle = m.VENTA_MEDIO_ENVIO
-		JOIN G_DE_GESTION.tarjeta en ON tpe.tipo_envio_codigo = en.tipo_envio_codigo AND en.envio_precio = m.VENTA_ENVIO_PRECIO
-		JOIN G_DE_GESTION.horario_local tmp ON tmp.tipo_medio_pago_Detalle = m.VENTA_MEDIO_PAGO
-		JOIN G_DE_GESTION.medio_pago mp ON tmp.tipo_medio_pago_codigo = mp.medio_pago_codigo
-	WHERE m.VENTA_CODIGO IS NOT NULL
-END
-GO	
-
-CREATE PROCEDURE G_DE_GESTION.migrar_venta_descuento AS
-BEGIN
-	INSERT INTO G_DE_GESTION.direccion (venta_descuento_importe, venta_codigo, tipo_descuento_codigo)
-	SELECT DISTINCT m.VENTA_DESCUENTO_IMPORTE, m.venta_codigo,td.tipo_descuento_codigo
-	FROM gd_esquema.Maestra m
-	JOIN G_DE_GESTION.cupon_reclamo td ON m.VENTA_DESCUENTO_CONCEPTO LIKE td.tipo_descuento_detalle
-	WHERE VENTA_CODIGO IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_cupones AS 
-BEGIN
-	INSERT INTO G_DE_GESTION.cupon (cupon_codigo, cupon_fecha_desde, cupon_fecha_hasta, cupon_tipo, cupon_valor)
-	SELECT DISTINCT VENTA_CUPON_CODIGO, VENTA_CUPON_FECHA_DESDE, VENTA_CUPON_FECHA_HASTA, VENTA_CUPON_TIPO, VENTA_CUPON_VALOR FROM gd_esquema.Maestra
-	WHERE VENTA_CUPON_CODIGO IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_venta_cupon AS
-BEGIN
-	INSERT INTO G_DE_GESTION.tipo_direccion (cupon_codigo, venta_codigo, venta_cupon_importe)
-	SELECT c.cupon_codigo , v.venta_codigo, m.VENTA_CUPON_IMPORTE FROM gd_esquema.Maestra m
-	JOIN G_DE_GESTION.marca_tarjeta v ON v.venta_codigo = m.VENTA_CODIGO
-	JOIN G_DE_GESTION.cupon c ON m.VENTA_CUPON_CODIGO = c.cupon_codigo
-	WHERE m.VENTA_CODIGO IS NOT NULL AND m.VENTA_CUPON_CODIGO IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_producto AS
-BEGIN
-    INSERT INTO G_DE_GESTION.producto(producto_codigo, categoria_producto_codigo, producto_descripcion, producto_marca, producto_material, 
-        producto_nombre, producto_variante_codigo) 
-    SELECT distinct m.PRODUCTO_CODIGO, G_DE_GESTION.obtener_categoria_codigo(m.PRODUCTO_CATEGORIA) , m.PRODUCTO_DESCRIPCION, m.PRODUCTO_MARCA, m.PRODUCTO_MATERIAL, m.PRODUCTO_NOMBRE, m.PRODUCTO_VARIANTE_CODIGO
-    FROM gd_esquema.Maestra m 
-    WHERE m.PRODUCTO_CODIGO IS NOT NULL
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_venta_producto AS
-BEGIN
-	INSERT INTO G_DE_GESTION.direccion_usuario (producto_codigo, venta_codigo, venta_producto_cantidad, venta_producto_precio)
-	SELECT DISTINCT p.producto_codigo, v.venta_codigo ,SUM(m.VENTA_PRODUCTO_CANTIDAD) as venta_producto_cantidad, SUM(m.VENTA_PRODUCTO_PRECIO) as venta_producto_precio FROM gd_esquema.Maestra m
-	JOIN G_DE_GESTION.producto p ON m.PRODUCTO_CODIGO = p.producto_codigo
-	JOIN G_DE_GESTION.marca_tarjeta v ON m.VENTA_CODIGO = v.venta_codigo
-	WHERE m.VENTA_CODIGO IS NOT NULL AND m.PRODUCTO_CODIGO IS NOT NULL AND m.VENTA_PRODUCTO_PRECIO IS NOT NULL AND m.VENTA_PRODUCTO_CANTIDAD IS NOT NULL
-	GROUP BY p.producto_codigo, v.venta_codigo
-END
-GO
-
---mirar
-CREATE PROCEDURE G_DE_GESTION.migrar_compra AS
-BEGIN
-    INSERT INTO G_DE_GESTION.localidad_repartidor(compra_numero, compra_fecha, compra_total, descuento_compra_codigo, medio_pago_codigo, proveedor_codigo)
-    SELECT distinct m.COMPRA_NUMERO, m.COMPRA_FECHA, m.COMPRA_TOTAL, m.DESCUENTO_COMPRA_CODIGO, 
-    G_DE_GESTION.obtener_medio_pago_codigo(m.COMPRA_MEDIO_PAGO), G_DE_GESTION.obtener_proveedor_codigo(m.PROVEEDOR_CUIT)
-    FROM gd_esquema.Maestra m 
-    WHERE m.COMPRA_NUMERO is not null and m.DESCUENTO_COMPRA_CODIGO is not null
-END
-GO
-
-CREATE PROCEDURE G_DE_GESTION.migrar_compra_producto AS
-BEGIN
-	INSERT INTO G_DE_GESTION.pedido (compra_numero, producto_codigo, compra_producto_cantidad, compra_producto_precio)
-	SELECT DISTINCT c.compra_numero, p.producto_codigo , SUM(m.COMPRA_PRODUCTO_CANTIDAD) as compra_producto_cantidad, SUM(m.COMPRA_PRODUCTO_PRECIO) as compra_producto_precio
-	FROM gd_esquema.Maestra m
-	JOIN G_DE_GESTION.producto p ON m.PRODUCTO_CODIGO LIKE p.producto_codigo
-	JOIN G_DE_GESTION.localidad_repartidor c ON m.COMPRA_NUMERO = c.compra_numero
-	GROUP BY c.compra_numero, p.producto_codigo
-END
-GO
-*/
 
 -- Migracion
 BEGIN TRANSACTION
@@ -880,14 +693,23 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_usuario
 	EXECUTE G_DE_GESTION.migrar_marca_tarjeta
 	EXECUTE G_DE_GESTION.migrar_paquete
+	EXECUTE G_DE_GESTION.migrar_pronvincias
+	EXECUTE G_DE_GESTION.migrar_localidades
+	EXECUTE G_DE_GESTION.migrar_direcciones
+	EXECUTE G_DE_GESTION.migrar_usuarios
+	EXECUTE G_DE_GESTION.migrar_direccion_usuario
+	EXECUTE G_DE_GESTION.migrar_tarjeta
+	
 COMMIT TRANSACTION
 GO
 
 -- Eliminacion de FUNCTIONs y PROCEDUREs
-/*
 DROP FUNCTION G_DE_GESTION.obtener_provincia_codigo
-DROP FUNCTION G_DE_GESTION.obtener_localidad_codigo
-*/
+DROP FUNCTION G_DE_GESTION.obtener_codigo_localidad
+DROP FUNCTION G_DE_GESTION.obtener_codigo_tipo_direccion
+DROP FUNCTION G_DE_GESTION.obtener_codigo_direccion
+DROP FUNCTION G_DE_GESTION.obtener_codigo_usuario
+DROP FUNCTION G_DE_GESTION.obtener_marca_tarjeta
 
 DROP PROCEDURE G_DE_GESTION.migrar_tipo_movilidad
 DROP PROCEDURE G_DE_GESTION.migrar_tipo_paquete
@@ -902,4 +724,10 @@ DROP PROCEDURE G_DE_GESTION.migrar_operador_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_usuario
 DROP PROCEDURE G_DE_GESTION.migrar_marca_tarjeta
 DROP PROCEDURE G_DE_GESTION.migrar_paquete
+DROP PROCEDURE G_DE_GESTION.migrar_pronvincias
+DROP PROCEDURE G_DE_GESTION.migrar_localidades
+DROP PROCEDURE G_DE_GESTION.migrar_direcciones
+DROP PROCEDURE G_DE_GESTION.migrar_usuarios
+DROP PROCEDURE G_DE_GESTION.migrar_direccion_usuario
+DROP PROCEDURE G_DE_GESTION.migrar_tarjeta
 GO
