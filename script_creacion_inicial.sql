@@ -986,6 +986,24 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_producto_local AS
+BEGIN
+	INSERT INTO G_DE_GESTION.producto_local(
+		local_id,
+		producto_codigo,
+		producto_local_precio
+	)
+	SELECT DISTINCT
+		l.local_id,
+		p.producto_codigo,
+		m.PRODUCTO_LOCAL_PRECIO
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.local l ON (l.local_nombre = m.LOCAL_NOMBRE)
+	JOIN G_DE_GESTION.producto p ON (p.producto_codigo = m.PRODUCTO_LOCAL_CODIGO)
+	WHERE m.PRODUCTO_LOCAL_CODIGO IS NOT NULL
+END
+GO
+
 -- Migracion
 BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_tipo_movilidad
@@ -1015,6 +1033,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_pedido
 	EXECUTE G_DE_GESTION.migrar_reclamo
 	EXECUTE G_DE_GESTION.migrar_horario_local
+	EXECUTE G_DE_GESTION.migrar_producto_local
 COMMIT TRANSACTION
 GO
 
@@ -1053,4 +1072,5 @@ DROP PROCEDURE G_DE_GESTION.migrar_local
 DROP PROCEDURE G_DE_GESTION.migrar_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_horario_local
+DROP PROCEDURE G_DE_GESTION.migrar_producto_local
 GO
