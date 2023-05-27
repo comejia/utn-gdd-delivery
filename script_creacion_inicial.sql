@@ -856,6 +856,83 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_local AS
+BEGIN
+	INSERT INTO G_DE_GESTION.local(
+		local_nombre,
+		local_descripcion,
+		local_direccion,
+		localidad_id,
+		categoria_id
+	)
+	SELECT DISTINCT
+		m.LOCAL_NOMBRE,
+		m.LOCAL_DESCRIPCION,
+		m.LOCAL_DIRECCION,
+		l_p.localidad_id,
+		NULL -- FK en NULL, esta bien?
+	FROM gd_esquema.Maestra m
+	JOIN (SELECT l.localidad_id, l.localidad_descripcion, p.provincia_descripcion FROM G_DE_GESTION.localidad l
+			JOIN G_DE_GESTION.provincia p ON (p.provincia_id = l.provincia_id)
+	) l_p ON (l_p.localidad_descripcion = m.LOCAL_LOCALIDAD AND l_p.provincia_descripcion = LOCAL_PROVINCIA)
+	WHERE m.LOCAL_NOMBRE IS NOT NULL
+END
+GO
+
+
+CREATE PROCEDURE G_DE_GESTION.migrar_pedido AS
+BEGIN
+	INSERT INTO G_DE_GESTION.pedido(
+		pedido_nro,
+		pedido_fecha,
+		usuario_id,
+		local_id,
+		pedido_direccion_envio,
+		pedido_precio_envio,
+		pedido_propina,
+		repartidor_id,
+		pedido_tarifa_servicio,
+		medio_pago_id,
+		pedido_total_productos,
+		pedido_total_cupones,
+		pedido_total_servicio,
+		pedido_observ,
+		pedido_estado,
+		pedido_tiempo_estimado_entrega,
+		pedido_fecha_entrega,
+		pedido_calificacion
+	)
+	SELECT DISTINCT
+		m.PEDIDO_NRO,
+		m.PEDIDO_FECHA,
+		u.usuario_id,
+		l.local_id,
+		m.DIRECCION_USUARIO_DIRECCION,
+		m.PEDIDO_PRECIO_ENVIO,
+		m.PEDIDO_PROPINA,
+		r.repartidor_id,
+		m.PEDIDO_TARIFA_SERVICIO,
+		mp.medio_pago_id,
+		m.PEDIDO_TOTAL_PRODUCTOS,
+		m.PEDIDO_TOTAL_CUPONES,
+		m.PEDIDO_TOTAL_SERVICIO,
+		m.PEDIDO_OBSERV,
+		m.PEDIDO_ESTADO,
+		m.PEDIDO_TIEMPO_ESTIMADO_ENTREGA,
+		m.PEDIDO_FECHA_ENTREGA,
+		m.PEDIDO_CALIFICACION
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
+	JOIN G_DE_GESTION.repartidor r ON (r.repartidor_dni = m.REPARTIDOR_DNI)
+	JOIN G_DE_GESTION.local l ON (l.local_nombre = m.LOCAL_NOMBRE)
+	JOIN (SELECT mp.medio_pago_id, mp.tarjeta_nro, tmp.tipo_medio_pago_descripcion FROM G_DE_GESTION.medio_pago mp
+			JOIN G_DE_GESTION.tipo_medio_pago tmp ON (tmp.tipo_medio_pago_id = mp.tipo_medio_pago_id)
+		) mp ON mp.tarjeta_nro = m.MEDIO_PAGO_NRO_TARJETA AND mp.tipo_medio_pago_descripcion = m.MEDIO_PAGO_TIPO
+	WHERE m.PEDIDO_NRO IS NOT NULL
+END
+GO
+
+
 -- Migracion
 BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_tipo_movilidad
@@ -881,6 +958,8 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_repartidor
 	EXECUTE G_DE_GESTION.migrar_medio_pago
 	EXECUTE G_DE_GESTION.migrar_envio_mensajeria
+	EXECUTE G_DE_GESTION.migrar_local
+	EXECUTE G_DE_GESTION.migrar_pedido
 COMMIT TRANSACTION
 GO
 
@@ -915,4 +994,6 @@ DROP PROCEDURE G_DE_GESTION.migrar_direccion_usuario
 DROP PROCEDURE G_DE_GESTION.migrar_repartidor
 DROP PROCEDURE G_DE_GESTION.migrar_medio_pago
 DROP PROCEDURE G_DE_GESTION.migrar_envio_mensajeria
+DROP PROCEDURE G_DE_GESTION.migrar_local
+DROP PROCEDURE G_DE_GESTION.migrar_pedido
 GO
