@@ -221,12 +221,13 @@ CREATE TABLE G_DE_GESTION.pedido(
 GO
 
 CREATE TABLE G_DE_GESTION.producto_pedido(
+	producto_pedido_item DECIMAL(18,0) IDENTITY(1,1), -- PK
 	pedido_nro DECIMAL(18,0) REFERENCES G_DE_GESTION.pedido, -- PK, FK
 	local_id DECIMAL(18,0), -- PK, FK
 	producto_codigo NVARCHAR(50), -- PK, FK
 	producto_pedido_precio DECIMAL(18,2) NOT NULL,
 	producto_pedido_cantidad DECIMAL(18,0) NOT NULL,
-	PRIMARY KEY(pedido_nro, local_id, producto_codigo),
+	PRIMARY KEY(producto_pedido_item, pedido_nro, local_id, producto_codigo),
 	FOREIGN KEY(local_id, producto_codigo) REFERENCES G_DE_GESTION.producto_local(local_id, producto_codigo)
 )
 GO
@@ -1004,6 +1005,46 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_producto_pedido AS
+BEGIN
+	INSERT INTO G_DE_GESTION.producto_pedido(
+		pedido_nro,
+		local_id,
+		producto_codigo,
+		producto_pedido_precio,
+		producto_pedido_cantidad
+	)
+	/*	SELECT 
+		pe.pedido_nro,
+		l.local_id,
+		p.producto_codigo,
+		m.PRODUCTO_LOCAL_PRECIO,
+		m.PRODUCTO_CANTIDAD
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.pedido pe ON (pe.pedido_nro = m.PEDIDO_NRO)
+	JOIN G_DE_GESTION.local l ON (l.local_nombre = m.LOCAL_NOMBRE)
+	JOIN G_DE_GESTION.producto p ON (p.producto_codigo = m.PRODUCTO_LOCAL_CODIGO)
+	WHERE m.PEDIDO_NRO IS NOT NULL AND m.PRODUCTO_LOCAL_CODIGO IS NOT NULL*/
+
+	SELECT
+		pe.pedido_nro,
+		pe.local_id,
+		pl.producto_codigo,
+		pl.producto_local_precio,
+		m.PRODUCTO_CANTIDAD * count(*)
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.pedido pe ON (pe.pedido_nro = m.PEDIDO_NRO)
+	JOIN G_DE_GESTION.producto_local pl ON (pl.local_id = pe.local_id AND pl.producto_codigo = m.PRODUCTO_LOCAL_CODIGO)
+	WHERE m.PEDIDO_NRO IS NOT NULL AND m.PRODUCTO_LOCAL_CODIGO IS NOT NULL
+	GROUP BY
+		pe.pedido_nro,
+		pe.local_id,
+		pl.producto_codigo,
+		pl.producto_local_precio,
+		m.PRODUCTO_CANTIDAD
+END
+GO
+
 -- Migracion
 BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_tipo_movilidad
@@ -1034,6 +1075,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_reclamo
 	EXECUTE G_DE_GESTION.migrar_horario_local
 	EXECUTE G_DE_GESTION.migrar_producto_local
+	EXECUTE G_DE_GESTION.migrar_producto_pedido
 COMMIT TRANSACTION
 GO
 
@@ -1073,4 +1115,5 @@ DROP PROCEDURE G_DE_GESTION.migrar_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_horario_local
 DROP PROCEDURE G_DE_GESTION.migrar_producto_local
+DROP PROCEDURE G_DE_GESTION.migrar_producto_pedido
 GO
