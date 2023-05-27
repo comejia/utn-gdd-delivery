@@ -81,7 +81,7 @@ GO
 CREATE TABLE G_DE_GESTION.localidad_repartidor(
 	localidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.localidad,
 	repartidor_id DECIMAL(18,0) REFERENCES G_DE_GESTION.repartidor,
-	localidad_repartidor_activo BIT NOT NULL,
+	localidad_repartidor_activo BIT, -- Debe admitir NULL
 	PRIMARY KEY(localidad_id, repartidor_id)
 )
 GO
@@ -1089,6 +1089,31 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_localidad_repartidor AS
+BEGIN
+	INSERT INTO G_DE_GESTION.localidad_repartidor(
+		localidad_id,
+		repartidor_id
+	)
+	SELECT DISTINCT
+		l.localidad_id,
+		r.repartidor_id	
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.localidad l ON (l.localidad_descripcion = m.LOCAL_LOCALIDAD)
+	JOIN G_DE_GESTION.repartidor r ON (r.repartidor_dni = m.REPARTIDOR_DNI)
+	WHERE m.PEDIDO_NRO IS NOT NULL
+	UNION
+	SELECT DISTINCT
+		l.localidad_id,
+		r.repartidor_id	
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.localidad l ON (l.localidad_descripcion = m.ENVIO_MENSAJERIA_LOCALIDAD)
+	JOIN G_DE_GESTION.repartidor r ON (r.repartidor_dni = m.REPARTIDOR_DNI)
+	WHERE m.ENVIO_MENSAJERIA_NRO IS NOT NULL
+END
+GO
+
+
 -- Migracion
 BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_tipo_movilidad
@@ -1122,6 +1147,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_producto_pedido
 	EXECUTE G_DE_GESTION.migrar_cupon_reclamo
 	EXECUTE G_DE_GESTION.migrar_pedido_cupon
+	EXECUTE G_DE_GESTION.migrar_localidad_repartidor
 COMMIT TRANSACTION
 GO
 
@@ -1164,4 +1190,5 @@ DROP PROCEDURE G_DE_GESTION.migrar_producto_local
 DROP PROCEDURE G_DE_GESTION.migrar_producto_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_cupon_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_pedido_cupon
+DROP PROCEDURE G_DE_GESTION.migrar_localidad_repartidor
 GO
