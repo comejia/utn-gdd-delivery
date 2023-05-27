@@ -81,7 +81,7 @@ GO
 CREATE TABLE G_DE_GESTION.localidad_repartidor(
 	localidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.localidad,
 	repartidor_id DECIMAL(18,0) REFERENCES G_DE_GESTION.repartidor,
-	localidad_repartidor_activo BIT, -- Debe admitir NULL
+	localidad_repartidor_activo BIT,
 	PRIMARY KEY(localidad_id, repartidor_id)
 )
 GO
@@ -153,7 +153,7 @@ GO
 
 CREATE TABLE G_DE_GESTION.categoria(
 	categoria_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
-	categoria_descripcion NVARCHAR(50), -- DEBE PODER ACEPTAR NULLs
+	categoria_descripcion NVARCHAR(50),
 	tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.tipo_local
 )
 GO
@@ -587,23 +587,6 @@ BEGIN
 END
 GO
 
--- NOTA: la categoria no existe por lo tanto no se pueden llenar datos.
--- Hay que corregir las constraints en LOCAL y CATEGORIA
-/*CREATE PROCEDURE G_DE_GESTION.migrar_categoria AS
-BEGIN
-	INSERT INTO G_DE_GESTION.categoria(
-		categoria_descripcion,
-		tipo_local_id
-	)
-	SELECT DISTINCT
-		NULL,
-		tl.tipo_local_id
-	FROM gd_esquema.Maestra m
-	JOIN G_DE_GESTION.tipo_local tl ON (tl.tipo_local_descripcion = m.LOCAL_TIPO)
-END
-GO
-*/
-
 CREATE PROCEDURE G_DE_GESTION.migrar_provincias AS
 BEGIN
 	INSERT INTO G_DE_GESTION.provincia(provincia_descripcion)
@@ -659,16 +642,12 @@ BEGIN
 	)
 	SELECT DISTINCT 
 		m.MEDIO_PAGO_NRO_TARJETA,
-		--G_DE_GESTION.obtener_marca_tarjeta(m.MARCA_TARJETA) as MARCA_TARJETA_ID,
 		mt.marca_tarjeta_id,
-		--G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) as USUARIO_ID
 		u.usuario_id
 	FROM gd_esquema.Maestra m
 	JOIN G_DE_GESTION.marca_tarjeta mt ON (mt.marca_tarjeta_descripcion = m.MARCA_TARJETA)
 	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
 	WHERE m.MEDIO_PAGO_NRO_TARJETA IS NOT NULL
-	--WHERE G_DE_GESTION.obtener_marca_tarjeta(m.MARCA_TARJETA) IS NOT NULL
-	--AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)  IS NOT NULL
 END
 GO
 
@@ -680,10 +659,8 @@ BEGIN
 		localidad_id
 	)
 	SELECT DISTINCT 
-		--G_DE_GESTION.obtener_codigo_tipo_direccion(m.DIRECCION_USUARIO_NOMBRE) as TIPO_DIRECCION_ID, 
 		td.tipo_direccion_id,
 		m.DIRECCION_USUARIO_DIRECCION,
-		--G_DE_GESTION.obtener_codigo_localidad(m.DIRECCION_USUARIO_LOCALIDAD) as LOCALIDAD_ID
 		l.localidad_id
 	FROM gd_esquema.Maestra m
 	JOIN G_DE_GESTION.tipo_direccion td ON (td.tipo_direccion_descripcion = m.DIRECCION_USUARIO_NOMBRE)
@@ -699,16 +676,12 @@ BEGIN
 		usuario_id
 	)
 	SELECT DISTINCT
-		--G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION) as DIRECCION_ID,
 		d.direccion_id,
-		--G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI) as USUARIO_ID
 		u.usuario_id
 	FROM gd_esquema.Maestra m
 	JOIN G_DE_GESTION.direccion d ON (d.direccion_descripcion = m.DIRECCION_USUARIO_DIRECCION)
 	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
 	WHERE m.DIRECCION_USUARIO_DIRECCION IS NOT NULL
-	--WHERE G_DE_GESTION.obtener_codigo_direccion(m.DIRECCION_USUARIO_DIRECCION) IS NOT NULL
-	--AND G_DE_GESTION.obtener_codigo_usuario(m.USUARIO_NOMBRE, m.USUARIO_APELLIDO, m.USUARIO_DNI)  IS NOT NULL 
 END
 GO
 
@@ -738,7 +711,6 @@ BEGIN
 END
 GO
 
--- NOTA: reeveer esta migracion
 CREATE PROCEDURE G_DE_GESTION.migrar_medio_pago AS
 BEGIN
 	INSERT INTO G_DE_GESTION.medio_pago(
@@ -832,7 +804,7 @@ BEGIN
 		m.LOCAL_DESCRIPCION,
 		m.LOCAL_DIRECCION,
 		l_p.localidad_id,
-		NULL -- FK en NULL, esta bien?
+		NULL
 	FROM gd_esquema.Maestra m
 	JOIN (SELECT l.localidad_id, l.localidad_descripcion, p.provincia_descripcion FROM G_DE_GESTION.localidad l
 			JOIN G_DE_GESTION.provincia p ON (p.provincia_id = l.provincia_id)
@@ -892,7 +864,6 @@ BEGIN
 	WHERE m.PEDIDO_NRO IS NOT NULL
 END
 GO
-
 
 CREATE PROCEDURE G_DE_GESTION.migrar_reclamo AS
 BEGIN
@@ -975,18 +946,6 @@ BEGIN
 		producto_pedido_precio,
 		producto_pedido_cantidad
 	)
-	/*	SELECT 
-		pe.pedido_nro,
-		l.local_id,
-		p.producto_codigo,
-		m.PRODUCTO_LOCAL_PRECIO,
-		m.PRODUCTO_CANTIDAD
-	FROM gd_esquema.Maestra m
-	JOIN G_DE_GESTION.pedido pe ON (pe.pedido_nro = m.PEDIDO_NRO)
-	JOIN G_DE_GESTION.local l ON (l.local_nombre = m.LOCAL_NOMBRE)
-	JOIN G_DE_GESTION.producto p ON (p.producto_codigo = m.PRODUCTO_LOCAL_CODIGO)
-	WHERE m.PEDIDO_NRO IS NOT NULL AND m.PRODUCTO_LOCAL_CODIGO IS NOT NULL*/
-
 	SELECT
 		pe.pedido_nro,
 		pe.local_id,
@@ -1006,9 +965,6 @@ BEGIN
 END
 GO
 
--- NOTA: Hay CUPON_NRO y CUPON_RECLAMO_NRO que son iguales. Por lo tanto
--- no se puede tener el NRO como PK
--- SOLUCION: cambiar de PK
 CREATE PROCEDURE G_DE_GESTION.migrar_cupon AS
 BEGIN
 	-- CUPON
@@ -1130,7 +1086,6 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_marca_tarjeta
 	EXECUTE G_DE_GESTION.migrar_paquete
 	EXECUTE G_DE_GESTION.migrar_cupon
-	--EXECUTE G_DE_GESTION.migrar_categoria
 	EXECUTE G_DE_GESTION.migrar_provincias
 	EXECUTE G_DE_GESTION.migrar_localidades
 	EXECUTE G_DE_GESTION.migrar_tarjeta
@@ -1173,7 +1128,6 @@ DROP PROCEDURE G_DE_GESTION.migrar_usuario
 DROP PROCEDURE G_DE_GESTION.migrar_marca_tarjeta
 DROP PROCEDURE G_DE_GESTION.migrar_paquete
 DROP PROCEDURE G_DE_GESTION.migrar_cupon
---DROP PROCEDURE G_DE_GESTION.migrar_categoria
 DROP PROCEDURE G_DE_GESTION.migrar_provincias
 DROP PROCEDURE G_DE_GESTION.migrar_localidades
 DROP PROCEDURE G_DE_GESTION.migrar_tarjeta
