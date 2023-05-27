@@ -969,6 +969,22 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_horario_local AS
+BEGIN
+	INSERT INTO G_DE_GESTION.horario_local(
+		local_id,
+		horario_id
+	)
+	SELECT DISTINCT
+		l.local_id,
+		h.horario_id
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.local l ON (l.local_nombre = m.LOCAL_NOMBRE)
+	JOIN G_DE_GESTION.horario h ON (h.horario_hora_apertura = m.HORARIO_LOCAL_HORA_APERTURA
+									AND h.horario_hora_cierre = m.HORARIO_LOCAL_HORA_CIERRE
+									AND h.horario_dia = m.HORARIO_LOCAL_DIA)
+END
+GO
 
 -- Migracion
 BEGIN TRANSACTION
@@ -998,6 +1014,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_local
 	EXECUTE G_DE_GESTION.migrar_pedido
 	EXECUTE G_DE_GESTION.migrar_reclamo
+	EXECUTE G_DE_GESTION.migrar_horario_local
 COMMIT TRANSACTION
 GO
 
@@ -1035,4 +1052,5 @@ DROP PROCEDURE G_DE_GESTION.migrar_envio_mensajeria
 DROP PROCEDURE G_DE_GESTION.migrar_local
 DROP PROCEDURE G_DE_GESTION.migrar_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_reclamo
+DROP PROCEDURE G_DE_GESTION.migrar_horario_local
 GO
