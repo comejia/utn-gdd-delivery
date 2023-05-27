@@ -239,7 +239,8 @@ CREATE TABLE G_DE_GESTION.tipo_cupon(
 GO
 
 CREATE TABLE G_DE_GESTION.cupon(
-	cupon_nro DECIMAL(18,0) PRIMARY KEY,
+	cupon_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	cupon_nro DECIMAL(18,0) NOT NULL,
 	cupon_monto DECIMAL(18,2) NOT NULL,
 	cupon_fecha_alta DATETIME2(3) NOT NULL,
 	cupon_fecha_vencimiento DATETIME2(3) NOT NULL,
@@ -250,8 +251,8 @@ GO
 
 CREATE TABLE G_DE_GESTION.pedido_cupon(
 	pedido_nro DECIMAL(18,0) REFERENCES G_DE_GESTION.pedido,
-	cupon_nro DECIMAL(18,0) REFERENCES G_DE_GESTION.cupon,
-	PRIMARY KEY(pedido_nro, cupon_nro)
+	cupon_id DECIMAL(18,0) REFERENCES G_DE_GESTION.cupon,
+	PRIMARY KEY(pedido_nro, cupon_id)
 )
 GO
 
@@ -289,9 +290,9 @@ CREATE TABLE G_DE_GESTION.reclamo(
 GO
 
 CREATE TABLE G_DE_GESTION.cupon_reclamo (
-	cupon_nro DECIMAL(18,0) REFERENCES G_DE_GESTION.cupon,
+	cupon_id DECIMAL(18,0) REFERENCES G_DE_GESTION.cupon,
 	reclamo_nro DECIMAL(18,0) REFERENCES G_DE_GESTION.reclamo,
-	PRIMARY KEY(cupon_nro, reclamo_nro)
+	PRIMARY KEY(cupon_id, reclamo_nro)
 )
 GO
 
@@ -585,46 +586,6 @@ BEGIN
 	JOIN G_DE_GESTION.tipo_paquete tp ON (tp.tipo_paquete_descripcion = m.PAQUETE_TIPO)
 END
 GO
-
-
--- NOTA: Hay CUPON_NRO y CUPON_RECLAMO_NRO que son iguales. Por lo tanto
--- no se puede tener el NRO como PK
-/*CREATE PROCEDURE G_DE_GESTION.migrar_cupon AS
-BEGIN
-	INSERT INTO G_DE_GESTION.cupon(
-		cupon_nro,
-		cupon_monto,
-		cupon_fecha_alta,
-		cupon_fecha_vencimiento,
-		tipo_cupon_id,
-		usuario_id
-	)
-	SELECT
-		m.CUPON_NRO,
-		m.CUPON_MONTO,
-		m.CUPON_FECHA_ALTA,
-		m.CUPON_FECHA_VENCIMIENTO,
-		tc.tipo_cupon_id,
-		u.usuario_id
-	FROM gd_esquema.Maestra m
-	JOIN G_DE_GESTION.tipo_cupon tc ON (tc.tipo_cupon_descripcion = m.CUPON_TIPO)
-	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
-	WHERE m.CUPON_NRO IS NOT NULL
-	UNION
-	SELECT
-		m.CUPON_RECLAMO_NRO,
-		m.CUPON_RECLAMO_MONTO,
-		m.CUPON_RECLAMO_FECHA_ALTA,
-		m.CUPON_RECLAMO_FECHA_VENCIMIENTO,
-		tc.tipo_cupon_id,
-		u.usuario_id
-	FROM gd_esquema.Maestra m
-	JOIN G_DE_GESTION.tipo_cupon tc ON (tc.tipo_cupon_descripcion = m.CUPON_RECLAMO_TIPO)
-	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
-	WHERE m.CUPON_RECLAMO_NRO IS NOT NULL
-END
-GO
-*/
 
 -- NOTA: la categoria no existe por lo tanto no se pueden llenar datos.
 -- Hay que corregir las constraints en LOCAL y CATEGORIA
@@ -1045,6 +1006,89 @@ BEGIN
 END
 GO
 
+-- NOTA: Hay CUPON_NRO y CUPON_RECLAMO_NRO que son iguales. Por lo tanto
+-- no se puede tener el NRO como PK
+-- SOLUCION: cambiar de PK
+CREATE PROCEDURE G_DE_GESTION.migrar_cupon AS
+BEGIN
+	-- CUPON
+	INSERT INTO G_DE_GESTION.cupon(
+		cupon_nro,
+		cupon_monto,
+		cupon_fecha_alta,
+		cupon_fecha_vencimiento,
+		tipo_cupon_id,
+		usuario_id
+	)
+	SELECT 
+		m.CUPON_NRO,
+		m.CUPON_MONTO,
+		m.CUPON_FECHA_ALTA,
+		m.CUPON_FECHA_VENCIMIENTO,
+		tc.tipo_cupon_id,
+		u.usuario_id
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.tipo_cupon tc ON (tc.tipo_cupon_descripcion = m.CUPON_TIPO)
+	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
+	WHERE m.CUPON_NRO IS NOT NULL AND m.PEDIDO_NRO IS NOT NULL
+	
+	-- CUPON_RECLAMO
+	INSERT INTO G_DE_GESTION.cupon(
+		cupon_nro,
+		cupon_monto,
+		cupon_fecha_alta,
+		cupon_fecha_vencimiento,
+		tipo_cupon_id,
+		usuario_id
+	)
+	SELECT 
+		m.CUPON_RECLAMO_NRO,
+		m.CUPON_RECLAMO_MONTO,
+		m.CUPON_RECLAMO_FECHA_ALTA,
+		m.CUPON_RECLAMO_FECHA_VENCIMIENTO,
+		tc.tipo_cupon_id,
+		u.usuario_id
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.tipo_cupon tc ON (tc.tipo_cupon_descripcion = m.CUPON_RECLAMO_TIPO)
+	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
+	WHERE m.CUPON_RECLAMO_NRO IS NOT NULL AND RECLAMO_NRO IS NOT NULL
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_cupon_reclamo AS
+BEGIN
+	INSERT INTO G_DE_GESTION.cupon_reclamo(
+		cupon_id,
+		reclamo_nro
+	)
+	SELECT 
+		c.cupon_id,
+		r.reclamo_nro
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.reclamo r ON (r.reclamo_nro = m.RECLAMO_NRO)
+	JOIN G_DE_GESTION.cupon c ON (c.cupon_nro = m.CUPON_RECLAMO_NRO)
+	WHERE c.cupon_id > (SELECT count(*) FROM gd_esquema.Maestra m
+						WHERE m.CUPON_NRO IS NOT NULL AND m.PEDIDO_NRO IS NOT NULL)
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_pedido_cupon AS
+BEGIN
+	INSERT INTO G_DE_GESTION.pedido_cupon(
+		pedido_nro,
+		cupon_id
+	)
+	SELECT DISTINCT
+		p.pedido_nro,
+		c.cupon_id
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.pedido p ON (p.pedido_nro = m.PEDIDO_NRO)
+	JOIN G_DE_GESTION.cupon c ON (c.cupon_nro = m.CUPON_NRO)
+	WHERE c.cupon_id <= (SELECT count(*) FROM gd_esquema.Maestra m
+						WHERE m.CUPON_NRO IS NOT NULL AND m.PEDIDO_NRO IS NOT NULL)
+END
+GO
+
 -- Migracion
 BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_tipo_movilidad
@@ -1060,7 +1104,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_usuario
 	EXECUTE G_DE_GESTION.migrar_marca_tarjeta
 	EXECUTE G_DE_GESTION.migrar_paquete
-	--EXECUTE G_DE_GESTION.migrar_cupon
+	EXECUTE G_DE_GESTION.migrar_cupon
 	--EXECUTE G_DE_GESTION.migrar_categoria
 	EXECUTE G_DE_GESTION.migrar_provincias
 	EXECUTE G_DE_GESTION.migrar_localidades
@@ -1076,6 +1120,8 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_horario_local
 	EXECUTE G_DE_GESTION.migrar_producto_local
 	EXECUTE G_DE_GESTION.migrar_producto_pedido
+	EXECUTE G_DE_GESTION.migrar_cupon_reclamo
+	EXECUTE G_DE_GESTION.migrar_pedido_cupon
 COMMIT TRANSACTION
 GO
 
@@ -1100,7 +1146,7 @@ DROP PROCEDURE G_DE_GESTION.migrar_operador_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_usuario
 DROP PROCEDURE G_DE_GESTION.migrar_marca_tarjeta
 DROP PROCEDURE G_DE_GESTION.migrar_paquete
---DROP PROCEDURE G_DE_GESTION.migrar_cupon
+DROP PROCEDURE G_DE_GESTION.migrar_cupon
 --DROP PROCEDURE G_DE_GESTION.migrar_categoria
 DROP PROCEDURE G_DE_GESTION.migrar_provincias
 DROP PROCEDURE G_DE_GESTION.migrar_localidades
@@ -1116,4 +1162,6 @@ DROP PROCEDURE G_DE_GESTION.migrar_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_horario_local
 DROP PROCEDURE G_DE_GESTION.migrar_producto_local
 DROP PROCEDURE G_DE_GESTION.migrar_producto_pedido
+DROP PROCEDURE G_DE_GESTION.migrar_cupon_reclamo
+DROP PROCEDURE G_DE_GESTION.migrar_pedido_cupon
 GO
