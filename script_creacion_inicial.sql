@@ -879,7 +879,6 @@ BEGIN
 END
 GO
 
-
 CREATE PROCEDURE G_DE_GESTION.migrar_pedido AS
 BEGIN
 	INSERT INTO G_DE_GESTION.pedido(
@@ -933,6 +932,44 @@ END
 GO
 
 
+CREATE PROCEDURE G_DE_GESTION.migrar_reclamo AS
+BEGIN
+	INSERT INTO G_DE_GESTION.reclamo(
+		reclamo_nro,
+		usuario_id,
+		pedido_nro,
+		tipo_reclamo_id,
+		reclamo_descripcion,
+		reclamo_fecha,
+		operador_reclamo_id,
+		reclamo_estado,
+		reclamo_solucion,
+		reclamo_fecha_solucion,
+		reclamo_calificacion
+	)
+	SELECT DISTINCT
+		m.RECLAMO_NRO,
+		u.usuario_id,
+		p.pedido_nro,
+		tr.tipo_reclamo_id,
+		m.RECLAMO_DESCRIPCION,
+		m.RECLAMO_FECHA,
+		o.operador_reclamo_id,
+		m.RECLAMO_ESTADO,
+		m.RECLAMO_SOLUCION,
+		m.RECLAMO_FECHA_SOLUCION,
+		m.RECLAMO_CALIFICACION
+	FROM gd_esquema.Maestra m
+	JOIN G_DE_GESTION.usuario u ON (u.usuario_dni = m.USUARIO_DNI)
+	JOIN G_DE_GESTION.pedido p ON (p.pedido_nro = m.PEDIDO_NRO)
+	JOIN G_DE_GESTION.tipo_reclamo tr ON (tr.tipo_reclamo_descripcion = m.RECLAMO_TIPO)
+	JOIN G_DE_GESTION.operador_reclamo o ON (o.operador_reclamo_dni = m.OPERADOR_RECLAMO_DNI 
+											AND o.operador_reclamo_fecha_nac = m.OPERADOR_RECLAMO_FECHA_NAC)
+	WHERE m.RECLAMO_NRO IS NOT NULL
+END
+GO
+
+
 -- Migracion
 BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_tipo_movilidad
@@ -960,6 +997,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_envio_mensajeria
 	EXECUTE G_DE_GESTION.migrar_local
 	EXECUTE G_DE_GESTION.migrar_pedido
+	EXECUTE G_DE_GESTION.migrar_reclamo
 COMMIT TRANSACTION
 GO
 
@@ -996,4 +1034,5 @@ DROP PROCEDURE G_DE_GESTION.migrar_medio_pago
 DROP PROCEDURE G_DE_GESTION.migrar_envio_mensajeria
 DROP PROCEDURE G_DE_GESTION.migrar_local
 DROP PROCEDURE G_DE_GESTION.migrar_pedido
+DROP PROCEDURE G_DE_GESTION.migrar_reclamo
 GO
