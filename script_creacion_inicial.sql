@@ -7,7 +7,7 @@ BEGIN
 END
 GO
 
--- Total tablas = 32
+-- Total tablas = 32 + 3 (se agregan estados)
 
 -- Se eliminan las tablas si existen (para testeo y tener ambiente limpio)
 IF OBJECT_ID('G_DE_GESTION.cupon_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.cupon_reclamo
