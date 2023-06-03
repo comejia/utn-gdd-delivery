@@ -14,6 +14,7 @@ IF OBJECT_ID('G_DE_GESTION.cupon_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.c
 IF OBJECT_ID('G_DE_GESTION.reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.reclamo
 IF OBJECT_ID('G_DE_GESTION.tipo_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_reclamo
 IF OBJECT_ID('G_DE_GESTION.operador_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.operador_reclamo
+IF OBJECT_ID('G_DE_GESTION.estado_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.estado_reclamo
 IF OBJECT_ID('G_DE_GESTION.pedido_cupon') IS NOT NULL DROP TABLE G_DE_GESTION.pedido_cupon
 IF OBJECT_ID('G_DE_GESTION.cupon') IS NOT NULL DROP TABLE G_DE_GESTION.cupon
 IF OBJECT_ID('G_DE_GESTION.tipo_cupon') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_cupon
@@ -21,6 +22,7 @@ IF OBJECT_ID('G_DE_GESTION.producto_pedido') IS NOT NULL DROP TABLE G_DE_GESTION
 IF OBJECT_ID('G_DE_GESTION.producto_local') IS NOT NULL DROP TABLE G_DE_GESTION.producto_local
 IF OBJECT_ID('G_DE_GESTION.producto') IS NOT NULL DROP TABLE G_DE_GESTION.producto
 IF OBJECT_ID('G_DE_GESTION.pedido') IS NOT NULL DROP TABLE G_DE_GESTION.pedido
+IF OBJECT_ID('G_DE_GESTION.estado_pedido') IS NOT NULL DROP TABLE G_DE_GESTION.estado_pedido
 IF OBJECT_ID('G_DE_GESTION.horario_local') IS NOT NULL DROP TABLE G_DE_GESTION.horario_local
 IF OBJECT_ID('G_DE_GESTION.local') IS NOT NULL DROP TABLE G_DE_GESTION.local
 IF OBJECT_ID('G_DE_GESTION.horario') IS NOT NULL DROP TABLE G_DE_GESTION.horario
@@ -28,6 +30,7 @@ IF OBJECT_ID('G_DE_GESTION.categoria') IS NOT NULL DROP TABLE G_DE_GESTION.categ
 IF OBJECT_ID('G_DE_GESTION.tipo_local') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_local
 IF OBJECT_ID('G_DE_GESTION.localidad_repartidor') IS NOT NULL DROP TABLE G_DE_GESTION.localidad_repartidor
 IF OBJECT_ID('G_DE_GESTION.envio_mensajeria') IS NOT NULL DROP TABLE G_DE_GESTION.envio_mensajeria
+IF OBJECT_ID('G_DE_GESTION.estado_envio_mensajeria') IS NOT NULL DROP TABLE G_DE_GESTION.estado_envio_mensajeria
 IF OBJECT_ID('G_DE_GESTION.repartidor') IS NOT NULL DROP TABLE G_DE_GESTION.repartidor
 IF OBJECT_ID('G_DE_GESTION.tipo_movilidad') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_movilidad
 IF OBJECT_ID('G_DE_GESTION.paquete') IS NOT NULL DROP TABLE G_DE_GESTION.paquete
@@ -198,6 +201,12 @@ CREATE TABLE G_DE_GESTION.producto_local(
 )
 GO
 
+CREATE TABLE G_DE_GESTION.estado_pedido (
+	estado_pedido_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	estado_pedido_descripcion NVARCHAR(50) NOT NULL
+)
+GO
+
 CREATE TABLE G_DE_GESTION.pedido(
 	pedido_nro DECIMAL(18,0) PRIMARY KEY,
 	pedido_fecha DATETIME2(3) NOT NULL,
@@ -213,7 +222,7 @@ CREATE TABLE G_DE_GESTION.pedido(
 	pedido_total_cupones DECIMAL(18,2) NOT NULL,
 	pedido_total_servicio DECIMAL(18,2) NOT NULL,
 	pedido_observ NVARCHAR(255) NOT NULL,
-	pedido_estado NVARCHAR(50) NOT NULL,
+	estado_pedido_id DECIMAL(18,0) REFERENCES G_DE_GESTION.estado_pedido,
 	pedido_tiempo_estimado_entrega DECIMAL(18,2) NOT NULL,
 	pedido_fecha_entrega DATETIME2(3) NOT NULL,
 	pedido_calificacion DECIMAL(18,0) NOT NULL
@@ -274,6 +283,12 @@ CREATE TABLE G_DE_GESTION.operador_reclamo (
 )
 GO
 
+CREATE TABLE G_DE_GESTION.estado_reclamo (
+	estado_reclamo_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	estado_reclamo_descripcion NVARCHAR(50) NOT NULL
+)
+GO
+
 CREATE TABLE G_DE_GESTION.reclamo(
 	reclamo_nro DECIMAL(18,0) PRIMARY KEY,
 	usuario_id DECIMAL(18,0) REFERENCES G_DE_GESTION.usuario,
@@ -282,7 +297,7 @@ CREATE TABLE G_DE_GESTION.reclamo(
 	reclamo_descripcion NVARCHAR(255) NOT NULL,
 	reclamo_fecha DATETIME2 NOT NULL,
 	operador_reclamo_id DECIMAL(18,0) REFERENCES G_DE_GESTION.operador_reclamo,
-	reclamo_estado NVARCHAR(50) NOT NULL,
+	estado_reclamo_id DECIMAL(18,0) REFERENCES G_DE_GESTION.estado_reclamo,
 	reclamo_solucion NVARCHAR(255) NOT NULL,
 	reclamo_fecha_solucion DATETIME2 NOT NULL,
 	reclamo_calificacion DECIMAL(18,0) NOT NULL
@@ -313,6 +328,12 @@ CREATE TABLE G_DE_GESTION.paquete (
 )
 GO
 
+CREATE TABLE G_DE_GESTION.estado_envio_mensajeria (
+	estado_envio_mensajeria_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	estado_envio_mensajeria_descripcion NVARCHAR(50) NOT NULL
+)
+GO
+
 CREATE TABLE G_DE_GESTION.envio_mensajeria(
 	envio_mensajeria_nro DECIMAL(18,0) PRIMARY KEY,
 	usuario_id DECIMAL(18,0) REFERENCES G_DE_GESTION.usuario,
@@ -329,7 +350,7 @@ CREATE TABLE G_DE_GESTION.envio_mensajeria(
 	envio_mensajeria_propina DECIMAL(18,2) NOT NULL,
 	medio_pago_id DECIMAL(18,0) REFERENCES G_DE_GESTION.medio_pago,
 	envio_mensajeria_total DECIMAL(18,2) NOT NULL,
-	envio_mensajeria_estado NVARCHAR(50) NOT NULL,
+	estado_envio_mensajeria_id DECIMAL(18,0) REFERENCES G_DE_GESTION.estado_envio_mensajeria,
 	envio_mensajeria_tiempo_estimado DECIMAL(18,2) NOT NULL,
 	envio_mensajeria_fecha_entrega DATETIME2(3) NOT NULL,
 	envio_mensajeria_calificacion DECIMAL(18,0) NOT NULL,
@@ -744,6 +765,15 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_estado_envio_mensajeria AS
+BEGIN
+	INSERT INTO G_DE_GESTION.estado_envio_mensajeria(estado_envio_mensajeria_descripcion)
+	SELECT DISTINCT m.ENVIO_MENSAJERIA_ESTADO 
+	FROM gd_esquema.Maestra m
+	WHERE m.ENVIO_MENSAJERIA_NRO IS NOT NULL
+END
+GO
+
 CREATE PROCEDURE G_DE_GESTION.migrar_envio_mensajeria AS
 BEGIN
 	INSERT INTO G_DE_GESTION.envio_mensajeria(
@@ -762,7 +792,7 @@ BEGIN
 		envio_mensajeria_propina,
 		medio_pago_id,
 		envio_mensajeria_total,
-		envio_mensajeria_estado,
+		estado_envio_mensajeria_id,
 		envio_mensajeria_tiempo_estimado,
 		envio_mensajeria_fecha_entrega,
 		envio_mensajeria_calificacion,
@@ -787,7 +817,7 @@ BEGIN
 			WHERE mp.tarjeta_nro = m.MEDIO_PAGO_NRO_TARJETA AND tmp.tipo_medio_pago_descripcion = m.MEDIO_PAGO_TIPO
 		) as medio_pago_id,
 		m.ENVIO_MENSAJERIA_TOTAL,
-		m.ENVIO_MENSAJERIA_ESTADO,
+		e.estado_envio_mensajeria_id,
 		m.ENVIO_MENSAJERIA_TIEMPO_ESTIMADO,
 		m.ENVIO_MENSAJERIA_FECHA_ENTREGA,
 		m.ENVIO_MENSAJERIA_CALIFICACION,
@@ -804,6 +834,7 @@ BEGIN
 		  JOIN G_DE_GESTION.tipo_paquete tp ON (tp.tipo_paquete_id = p.tipo_paquete_id)
 		 ) p_t ON (p_t.tipo_paquete_descripcion = m.PAQUETE_TIPO)
 	JOIN G_DE_GESTION.repartidor r ON (r.repartidor_dni = m.REPARTIDOR_DNI)
+	JOIN G_DE_GESTION.estado_envio_mensajeria e ON (e.estado_envio_mensajeria_descripcion = m.ENVIO_MENSAJERIA_ESTADO)
 	WHERE m.ENVIO_MENSAJERIA_NRO IS NOT NULL
 END
 GO
@@ -831,6 +862,15 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_estado_pedido AS
+BEGIN
+	INSERT INTO G_DE_GESTION.estado_pedido(estado_pedido_descripcion)
+	SELECT DISTINCT m.PEDIDO_ESTADO 
+	FROM gd_esquema.Maestra m
+	WHERE m.PEDIDO_NRO IS NOT NULL
+END
+GO
+
 CREATE PROCEDURE G_DE_GESTION.migrar_pedido AS
 BEGIN
 	INSERT INTO G_DE_GESTION.pedido(
@@ -848,7 +888,7 @@ BEGIN
 		pedido_total_cupones,
 		pedido_total_servicio,
 		pedido_observ,
-		pedido_estado,
+		estado_pedido_id,
 		pedido_tiempo_estimado_entrega,
 		pedido_fecha_entrega,
 		pedido_calificacion
@@ -868,7 +908,7 @@ BEGIN
 		m.PEDIDO_TOTAL_CUPONES,
 		m.PEDIDO_TOTAL_SERVICIO,
 		m.PEDIDO_OBSERV,
-		m.PEDIDO_ESTADO,
+		e.estado_pedido_id,
 		m.PEDIDO_TIEMPO_ESTIMADO_ENTREGA,
 		m.PEDIDO_FECHA_ENTREGA,
 		m.PEDIDO_CALIFICACION
@@ -879,7 +919,17 @@ BEGIN
 	JOIN (SELECT mp.medio_pago_id, mp.tarjeta_nro, tmp.tipo_medio_pago_descripcion FROM G_DE_GESTION.medio_pago mp
 			JOIN G_DE_GESTION.tipo_medio_pago tmp ON (tmp.tipo_medio_pago_id = mp.tipo_medio_pago_id)
 		) mp ON mp.tarjeta_nro = m.MEDIO_PAGO_NRO_TARJETA AND mp.tipo_medio_pago_descripcion = m.MEDIO_PAGO_TIPO
+	JOIN G_DE_GESTION.estado_pedido e ON (e.estado_pedido_descripcion = m.PEDIDO_ESTADO)
 	WHERE m.PEDIDO_NRO IS NOT NULL
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_estado_reclamo AS
+BEGIN
+	INSERT INTO G_DE_GESTION.estado_reclamo(estado_reclamo_descripcion)
+	SELECT DISTINCT m.RECLAMO_ESTADO 
+	FROM gd_esquema.Maestra m
+	WHERE m.RECLAMO_NRO IS NOT NULL
 END
 GO
 
@@ -893,7 +943,7 @@ BEGIN
 		reclamo_descripcion,
 		reclamo_fecha,
 		operador_reclamo_id,
-		reclamo_estado,
+		estado_reclamo_id,
 		reclamo_solucion,
 		reclamo_fecha_solucion,
 		reclamo_calificacion
@@ -906,7 +956,7 @@ BEGIN
 		m.RECLAMO_DESCRIPCION,
 		m.RECLAMO_FECHA,
 		o.operador_reclamo_id,
-		m.RECLAMO_ESTADO,
+		e.estado_reclamo_id,
 		m.RECLAMO_SOLUCION,
 		m.RECLAMO_FECHA_SOLUCION,
 		m.RECLAMO_CALIFICACION
@@ -916,6 +966,7 @@ BEGIN
 	JOIN G_DE_GESTION.tipo_reclamo tr ON (tr.tipo_reclamo_descripcion = m.RECLAMO_TIPO)
 	JOIN G_DE_GESTION.operador_reclamo o ON (o.operador_reclamo_dni = m.OPERADOR_RECLAMO_DNI 
 											AND o.operador_reclamo_fecha_nac = m.OPERADOR_RECLAMO_FECHA_NAC)
+	JOIN G_DE_GESTION.estado_reclamo e ON (e.estado_reclamo_descripcion = m.RECLAMO_ESTADO)
 	WHERE m.RECLAMO_NRO IS NOT NULL
 END
 GO
@@ -1111,9 +1162,13 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_direccion_usuario
 	EXECUTE G_DE_GESTION.migrar_repartidor
 	EXECUTE G_DE_GESTION.migrar_medio_pago
+	EXECUTE G_DE_GESTION.migrar_estado_envio_mensajeria
 	EXECUTE G_DE_GESTION.migrar_envio_mensajeria
+	EXECUTE G_DE_GESTION.migrar_categoria
 	EXECUTE G_DE_GESTION.migrar_local
+	EXECUTE G_DE_GESTION.migrar_estado_pedido
 	EXECUTE G_DE_GESTION.migrar_pedido
+	EXECUTE G_DE_GESTION.migrar_estado_reclamo
 	EXECUTE G_DE_GESTION.migrar_reclamo
 	EXECUTE G_DE_GESTION.migrar_horario_local
 	EXECUTE G_DE_GESTION.migrar_producto_local
@@ -1121,7 +1176,6 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_cupon_reclamo
 	EXECUTE G_DE_GESTION.migrar_pedido_cupon
 	EXECUTE G_DE_GESTION.migrar_localidad_repartidor
-	EXECUTE G_DE_GESTION.migrar_categoria
 COMMIT TRANSACTION
 GO
 
@@ -1165,4 +1219,7 @@ DROP PROCEDURE G_DE_GESTION.migrar_cupon_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_pedido_cupon
 DROP PROCEDURE G_DE_GESTION.migrar_localidad_repartidor
 DROP PROCEDURE G_DE_GESTION.migrar_categoria
+DROP PROCEDURE G_DE_GESTION.migrar_estado_reclamo
+DROP PROCEDURE G_DE_GESTION.migrar_estado_pedido
+DROP PROCEDURE G_DE_GESTION.migrar_estado_envio_mensajeria
 GO
