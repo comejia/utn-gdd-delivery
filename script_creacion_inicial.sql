@@ -768,7 +768,7 @@ GO
 CREATE PROCEDURE G_DE_GESTION.migrar_estado_envio_mensajeria AS
 BEGIN
 	INSERT INTO G_DE_GESTION.estado_envio_mensajeria(estado_envio_mensajeria_descripcion)
-	SELECT DISTINCT m.ENVIO_MENSAJERIA_ESTADO 
+	SELECT DISTINCT m.ENVIO_MENSAJERIA_ESTADO
 	FROM gd_esquema.Maestra m
 	WHERE m.ENVIO_MENSAJERIA_NRO IS NOT NULL
 END
@@ -865,7 +865,7 @@ GO
 CREATE PROCEDURE G_DE_GESTION.migrar_estado_pedido AS
 BEGIN
 	INSERT INTO G_DE_GESTION.estado_pedido(estado_pedido_descripcion)
-	SELECT DISTINCT m.PEDIDO_ESTADO 
+	SELECT DISTINCT m.PEDIDO_ESTADO
 	FROM gd_esquema.Maestra m
 	WHERE m.PEDIDO_NRO IS NOT NULL
 END
@@ -927,7 +927,7 @@ GO
 CREATE PROCEDURE G_DE_GESTION.migrar_estado_reclamo AS
 BEGIN
 	INSERT INTO G_DE_GESTION.estado_reclamo(estado_reclamo_descripcion)
-	SELECT DISTINCT m.RECLAMO_ESTADO 
+	SELECT DISTINCT m.RECLAMO_ESTADO
 	FROM gd_esquema.Maestra m
 	WHERE m.RECLAMO_NRO IS NOT NULL
 END
