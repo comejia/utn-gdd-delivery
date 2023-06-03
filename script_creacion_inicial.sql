@@ -433,6 +433,24 @@ BEGIN
 	SELECT DISTINCT m.LOCAL_TIPO 
 	FROM gd_esquema.Maestra m
 	WHERE m.LOCAL_TIPO IS NOT NULL
+
+	INSERT INTO G_DE_GESTION.tipo_local(tipo_local_descripcion)
+	VALUES ('Tipo Local Comida')
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_categoria AS
+BEGIN
+	INSERT INTO G_DE_GESTION.categoria(
+		categoria_descripcion,
+		tipo_local_id
+	) 
+	VALUES
+		('Kiosko', (SELECT tl.tipo_local_id FROM G_DE_GESTION.tipo_local tl WHERE tl.tipo_local_descripcion = 'Tipo Local Mercado')),
+		('Supermercado', (SELECT tl.tipo_local_id FROM G_DE_GESTION.tipo_local tl WHERE tl.tipo_local_descripcion = 'Tipo Local Mercado')),
+		('Parrilla', (SELECT tl.tipo_local_id FROM G_DE_GESTION.tipo_local tl WHERE tl.tipo_local_descripcion = 'Tipo Local Comida')),
+		('Heladeria', (SELECT tl.tipo_local_id FROM G_DE_GESTION.tipo_local tl WHERE tl.tipo_local_descripcion = 'Tipo Local Comida')),
+		('Comidas rapidas', (SELECT tl.tipo_local_id FROM G_DE_GESTION.tipo_local tl WHERE tl.tipo_local_descripcion = 'Tipo Local Comida'))
 END
 GO
 
@@ -1103,6 +1121,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_cupon_reclamo
 	EXECUTE G_DE_GESTION.migrar_pedido_cupon
 	EXECUTE G_DE_GESTION.migrar_localidad_repartidor
+	EXECUTE G_DE_GESTION.migrar_categoria
 COMMIT TRANSACTION
 GO
 
@@ -1145,4 +1164,5 @@ DROP PROCEDURE G_DE_GESTION.migrar_producto_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_cupon_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_pedido_cupon
 DROP PROCEDURE G_DE_GESTION.migrar_localidad_repartidor
+DROP PROCEDURE G_DE_GESTION.migrar_categoria
 GO
