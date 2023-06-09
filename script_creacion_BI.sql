@@ -2,7 +2,7 @@ USE GD1C2023
 GO
 
 IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'G_DE_GESTION')
-	THROW 51000, 'No se encontro esquema. Este script debe ejecutarse despues de script_creacion_inicial.sql', 1;
+	THROW 51000, 'No se encontro esquema. Este script debe ejecutarse despues de script_creacion_inicial.sql', 1
 GO
 
 IF OBJECT_ID('G_DE_GESTION.Circuitos_Mas_Peligrosos', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_Mas_Peligrosos;
@@ -15,84 +15,147 @@ IF OBJECT_ID('G_DE_GESTION.Desgaste', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.De
 IF OBJECT_ID('G_DE_GESTION.Mayor_velocidad_por_sector ', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Mayor_velocidad_por_sector ;
 IF OBJECT_ID('G_DE_GESTION.Mejor_tiempo_vuelta ', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Mejor_tiempo_vuelta;
 
-IF OBJECT_ID('G_DE_GESTION.BI_dim_tiempo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tiempo;
-IF OBJECT_ID('G_DE_GESTION.BI_dim_dia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_dia;
 
 
-IF OBJECT_ID('G_DE_GESTION.BI_Sector', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Sector;
-IF OBJECT_ID('G_DE_GESTION.BI_Componente', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Componente;
-IF OBJECT_ID('G_DE_GESTION.BI_Telemetria', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Telemetria;
-IF OBJECT_ID('G_DE_GESTION.BI_Carrera', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Carrera;
-IF OBJECT_ID('G_DE_GESTION.BI_Involucrados_Incidente', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Involucrados_Incidente;
-IF OBJECT_ID('G_DE_GESTION.BI_Parada', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Parada;
-IF OBJECT_ID('G_DE_GESTION.BI_Incidente', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Incidente;
-IF OBJECT_ID('G_DE_GESTION.BI_Performance', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Performance;
-
-IF OBJECT_ID('G_DE_GESTION.BI_Escuderia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Escuderia;
-IF OBJECT_ID('G_DE_GESTION.BI_Auto', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Auto;
-IF OBJECT_ID('G_DE_GESTION.BI_Vuelta', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Vuelta;
-IF OBJECT_ID('G_DE_GESTION.BI_Circuito', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Circuito;
+IF OBJECT_ID('G_DE_GESTION.BI_dim_tiempo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tiempo
+IF OBJECT_ID('G_DE_GESTION.BI_dim_dia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_dia
+IF OBJECT_ID('G_DE_GESTION.BI_dim_region', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_region
+IF OBJECT_ID('G_DE_GESTION.BI_dim_rango_horario', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_rango_horario
+IF OBJECT_ID('G_DE_GESTION.BI_dim_rango_etario', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_rango_etario
+IF OBJECT_ID('G_DE_GESTION.BI_dim_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_local
+IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_local
+IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_medio_pago', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_medio_pago
+IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_movilidad', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_movilidad
+IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_paquete', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_paquete
+IF OBJECT_ID('G_DE_GESTION.BI_dim_estado_pedido', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_estado_pedido
+IF OBJECT_ID('G_DE_GESTION.BI_dim_estado_envio_mensajeria', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_estado_envio_mensajeria
+IF OBJECT_ID('G_DE_GESTION.BI_dim_estado_reclamo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_estado_reclamo
 GO
 
 
 ----- Dimensiones ----
 CREATE TABLE G_DE_GESTION.BI_dim_tiempo(
-	tiempo_id INT IDENTITY(1,1) PRIMARY KEY,
+	tiempo_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	anio INT NOT NULL,
 	mes INT NOT NULL
 )
 GO
 
 CREATE TABLE G_DE_GESTION.BI_dim_dia(
-	dia_id INT IDENTITY(1,1) PRIMARY KEY,
+	dia_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	dia NVARCHAR(50) NOT NULL,
+)
+GO
+
+/*CREATE TABLE G_DE_GESTION.provincia(
+	provincia_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	provincia_descripcion NVARCHAR(255) NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.localidad(
+	localidad_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	localidad_descripcion NVARCHAR(255) NOT NULL,
+	provincia_id DECIMAL(18,0) REFERENCES G_DE_GESTION.provincia
+)
+GO*/
+
+CREATE TABLE G_DE_GESTION.BI_dim_region(
+	region_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	provincia_descripcion NVARCHAR(255) NOT NULL,
+	localidad_descripcion NVARCHAR(255) NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_rango_horario(
+	rango_horario_id INT IDENTITY(1,1) PRIMARY KEY,
+	rango_horario nvarchar(50) NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_rango_etario(
+	rango_etario_id INT IDENTITY(1,1) PRIMARY KEY,
+	rango_etario nvarchar(50) NOT NULL
+)
+GO
+
+/*CREATE TABLE G_DE_GESTION.tipo_local(
+	tipo_local_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	tipo_local_descripcion NVARCHAR(50) NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.categoria(
+	categoria_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	categoria_descripcion NVARCHAR(50),
+	tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.tipo_local
+)
+GO*/
+
+CREATE TABLE G_DE_GESTION.BI_dim_tipo_local(
+	tipo_local_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	tipo_local_descripcion NVARCHAR(50) NOT NULL,
+	categoria_descripcion NVARCHAR(50)
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_local(
+	local_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	local_nombre NVARCHAR(100) NOT NULL,
+	local_descripcion NVARCHAR(255) NOT NULL,
+	local_direccion NVARCHAR(255) NOT NULL,
+	tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_local
+	--localidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.localidad,
+	--categoria_id DECIMAL(18,0) REFERENCES G_DE_GESTION.categoria
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_tipo_medio_pago(
+	tipo_medio_pago_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	tipo_medio_pago_descripcion NVARCHAR(50) NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_tipo_movilidad(
+	tipo_movilidad_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	tipo_movilidad_descripcion NVARCHAR(50) NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_tipo_paquete (
+	tipo_paquete_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	tipo_paquete_descripcion NVARCHAR(50) NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_estado_pedido (
+	estado_pedido_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	estado_pedido_descripcion NVARCHAR(50) NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_estado_envio_mensajeria (
+	estado_envio_mensajeria_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	estado_envio_mensajeria_descripcion NVARCHAR(50) NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_estado_reclamo (
+	estado_reclamo_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	estado_reclamo_descripcion NVARCHAR(50) NOT NULL
 )
 GO
 
 
 
-CREATE TABLE G_DE_GESTION.BI_Escuderia 
-( 
-	BI_Escuderia_codigo int PRIMARY KEY,
-	escu_nombre nvarchar(255)
-)
 
-CREATE TABLE G_DE_GESTION.BI_Sector
-( 
-	BI_sector_codigo int PRIMARY KEY,
-	sect_tipo_codigo int,
-	sect_tipo_nombre nvarchar(255)
-)
 
-CREATE TABLE G_DE_GESTION.BI_Carrera
-( 
-	carr_codigo INT PRIMARY KEY,
-	carr_fecha DATE NOT NULL,
-	carr_circuito INT NOT NULL -- (fk)
-)
 
-CREATE TABLE G_DE_GESTION.BI_Auto( 
-	BI_Auto_codigo int IDENTITY(1,1) PRIMARY KEY,
-	auto_codigo int,
-	auto_escuderia int
-)
 
-CREATE TABLE G_DE_GESTION.BI_Vuelta ( 
-	BI_Vuelta_codigo int IDENTITY(1,1) PRIMARY KEY,
-	vuelta_numero decimal(18,0),
-	vuelta_circuito int
-)
 
-CREATE TABLE G_DE_GESTION.BI_Componente ( 
-	BI_Componente_codigo int IDENTITY(1,1) PRIMARY KEY,
-	componente_tipo nvarchar(255)
-)
 
-CREATE TABLE G_DE_GESTION.BI_Circuito( 
-	BI_Circuito_codigo int IDENTITY(1,1) PRIMARY KEY,
-	circ_codigo int,
-	circ_nombre nvarchar(255)
-)
+
+
 
 CREATE TABLE G_DE_GESTION.BI_Telemetria 
 (
