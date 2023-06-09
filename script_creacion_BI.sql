@@ -1,100 +1,100 @@
-
---------------------------------------
----------------- INIT ----------------
---------------------------------------
-
-USE GD1C2022
+USE GD1C2023
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'GROUPBY4')
-BEGIN 
-	EXEC ('CREATE SCHEMA GROUPBY4')
-END
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'G_DE_GESTION')
+	THROW 51000, 'No se encontro esquema. Este script debe ejecutarse despues de script_creacion_inicial.sql', 1;
 GO
 
-IF OBJECT_ID('GROUPBY4.Circuitos_Mas_Peligrosos', 'V') IS NOT NULL DROP VIEW GROUPBY4.Circuitos_Mas_Peligrosos;
-IF OBJECT_ID('GROUPBY4.Incidentes_Escuderia_Tipo_Sector', 'V') IS NOT NULL DROP VIEW GROUPBY4.Incidentes_Escuderia_Tipo_Sector;
-IF OBJECT_ID('GROUPBY4.Tiempo_Promedio_En_Paradas', 'V') IS NOT NULL DROP VIEW GROUPBY4.Tiempo_Promedio_En_Paradas;
-IF OBJECT_ID('GROUPBY4.Cant_Paradas_Circuito_Escuderia', 'V') IS NOT NULL DROP VIEW GROUPBY4.Cant_Paradas_Circuito_Escuderia;
-IF OBJECT_ID('GROUPBY4.Circuitos_Mayor_Tiempo_Boxes', 'V') IS NOT NULL DROP VIEW GROUPBY4.Circuitos_Mayor_Tiempo_Boxes;
-IF OBJECT_ID('GROUPBY4.Circuitos_mayor_combustible', 'V') IS NOT NULL DROP VIEW GROUPBY4.Circuitos_mayor_combustible;
-IF OBJECT_ID('GROUPBY4.Desgaste', 'V') IS NOT NULL DROP VIEW GROUPBY4.Desgaste;
-IF OBJECT_ID('GROUPBY4.Mayor_velocidad_por_sector ', 'V') IS NOT NULL DROP VIEW GROUPBY4.Mayor_velocidad_por_sector ;
-IF OBJECT_ID('GROUPBY4.Mejor_tiempo_vuelta ', 'V') IS NOT NULL DROP VIEW GROUPBY4.Mejor_tiempo_vuelta;
+IF OBJECT_ID('G_DE_GESTION.Circuitos_Mas_Peligrosos', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_Mas_Peligrosos;
+IF OBJECT_ID('G_DE_GESTION.Incidentes_Escuderia_Tipo_Sector', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Incidentes_Escuderia_Tipo_Sector;
+IF OBJECT_ID('G_DE_GESTION.Tiempo_Promedio_En_Paradas', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Tiempo_Promedio_En_Paradas;
+IF OBJECT_ID('G_DE_GESTION.Cant_Paradas_Circuito_Escuderia', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Cant_Paradas_Circuito_Escuderia;
+IF OBJECT_ID('G_DE_GESTION.Circuitos_Mayor_Tiempo_Boxes', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_Mayor_Tiempo_Boxes;
+IF OBJECT_ID('G_DE_GESTION.Circuitos_mayor_combustible', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_mayor_combustible;
+IF OBJECT_ID('G_DE_GESTION.Desgaste', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Desgaste;
+IF OBJECT_ID('G_DE_GESTION.Mayor_velocidad_por_sector ', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Mayor_velocidad_por_sector ;
+IF OBJECT_ID('G_DE_GESTION.Mejor_tiempo_vuelta ', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Mejor_tiempo_vuelta;
 
-IF OBJECT_ID('GROUPBY4.BI_Sector', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Sector;
-IF OBJECT_ID('GROUPBY4.BI_Componente', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Componente;
-IF OBJECT_ID('GROUPBY4.BI_Telemetria', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Telemetria;
-IF OBJECT_ID('GROUPBY4.BI_Carrera', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Carrera;
-IF OBJECT_ID('GROUPBY4.BI_Involucrados_Incidente', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Involucrados_Incidente;
-IF OBJECT_ID('GROUPBY4.BI_Parada', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Parada;
-IF OBJECT_ID('GROUPBY4.BI_Incidente', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Incidente;
-IF OBJECT_ID('GROUPBY4.BI_Performance', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Performance;
-IF OBJECT_ID('GROUPBY4.BI_Tiempo', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Tiempo;
-IF OBJECT_ID('GROUPBY4.BI_Escuderia', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Escuderia;
-IF OBJECT_ID('GROUPBY4.BI_Auto', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Auto;
-IF OBJECT_ID('GROUPBY4.BI_Vuelta', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Vuelta;
-IF OBJECT_ID('GROUPBY4.BI_Circuito', 'U') IS NOT NULL DROP TABLE GROUPBY4.BI_Circuito;
+IF OBJECT_ID('G_DE_GESTION.BI_dim_tiempo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tiempo;
+IF OBJECT_ID('G_DE_GESTION.BI_dim_dia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_dia;
 
 
---------------------------------------
------------- DINMENSIONS -------------
---------------------------------------
+IF OBJECT_ID('G_DE_GESTION.BI_Sector', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Sector;
+IF OBJECT_ID('G_DE_GESTION.BI_Componente', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Componente;
+IF OBJECT_ID('G_DE_GESTION.BI_Telemetria', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Telemetria;
+IF OBJECT_ID('G_DE_GESTION.BI_Carrera', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Carrera;
+IF OBJECT_ID('G_DE_GESTION.BI_Involucrados_Incidente', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Involucrados_Incidente;
+IF OBJECT_ID('G_DE_GESTION.BI_Parada', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Parada;
+IF OBJECT_ID('G_DE_GESTION.BI_Incidente', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Incidente;
+IF OBJECT_ID('G_DE_GESTION.BI_Performance', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Performance;
 
-CREATE TABLE GROUPBY4.BI_Escuderia 
+IF OBJECT_ID('G_DE_GESTION.BI_Escuderia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Escuderia;
+IF OBJECT_ID('G_DE_GESTION.BI_Auto', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Auto;
+IF OBJECT_ID('G_DE_GESTION.BI_Vuelta', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Vuelta;
+IF OBJECT_ID('G_DE_GESTION.BI_Circuito', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_Circuito;
+GO
+
+
+----- Dimensiones ----
+CREATE TABLE G_DE_GESTION.BI_dim_tiempo(
+	tiempo_id INT IDENTITY(1,1) PRIMARY KEY,
+	anio INT NOT NULL,
+	mes INT NOT NULL
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_dim_dia(
+	dia_id INT IDENTITY(1,1) PRIMARY KEY,
+	dia NVARCHAR(50) NOT NULL,
+)
+GO
+
+
+
+CREATE TABLE G_DE_GESTION.BI_Escuderia 
 ( 
 	BI_Escuderia_codigo int PRIMARY KEY,
 	escu_nombre nvarchar(255)
 )
 
-CREATE TABLE GROUPBY4.BI_Sector
+CREATE TABLE G_DE_GESTION.BI_Sector
 ( 
 	BI_sector_codigo int PRIMARY KEY,
 	sect_tipo_codigo int,
 	sect_tipo_nombre nvarchar(255)
 )
 
-CREATE TABLE GROUPBY4.BI_Tiempo
-(
-	codigo INT IDENTITY PRIMARY KEY NOT NULL,
-	anio INT,
-	cuatrimestre INT,
-	mes INT,
-	semana INT,
-	dia INT,
-)
-
-CREATE TABLE GROUPBY4.BI_Carrera
+CREATE TABLE G_DE_GESTION.BI_Carrera
 ( 
 	carr_codigo INT PRIMARY KEY,
 	carr_fecha DATE NOT NULL,
 	carr_circuito INT NOT NULL -- (fk)
 )
 
-CREATE TABLE GROUPBY4.BI_Auto( 
+CREATE TABLE G_DE_GESTION.BI_Auto( 
 	BI_Auto_codigo int IDENTITY(1,1) PRIMARY KEY,
 	auto_codigo int,
 	auto_escuderia int
 )
 
-CREATE TABLE GROUPBY4.BI_Vuelta ( 
+CREATE TABLE G_DE_GESTION.BI_Vuelta ( 
 	BI_Vuelta_codigo int IDENTITY(1,1) PRIMARY KEY,
 	vuelta_numero decimal(18,0),
 	vuelta_circuito int
 )
 
-CREATE TABLE GROUPBY4.BI_Componente ( 
+CREATE TABLE G_DE_GESTION.BI_Componente ( 
 	BI_Componente_codigo int IDENTITY(1,1) PRIMARY KEY,
 	componente_tipo nvarchar(255)
 )
 
-CREATE TABLE GROUPBY4.BI_Circuito( 
+CREATE TABLE G_DE_GESTION.BI_Circuito( 
 	BI_Circuito_codigo int IDENTITY(1,1) PRIMARY KEY,
 	circ_codigo int,
 	circ_nombre nvarchar(255)
 )
 
-CREATE TABLE GROUPBY4.BI_Telemetria 
+CREATE TABLE G_DE_GESTION.BI_Telemetria 
 (
 	tele_codigo INT PRIMARY KEY,
 	tele_auto INT NOT NULL, --(fk)
@@ -112,46 +112,46 @@ CREATE TABLE GROUPBY4.BI_Telemetria
 
 -- Insert Data
 
-INSERT INTO GROUPBY4.BI_Carrera
+INSERT INTO G_DE_GESTION.BI_Carrera
 SELECT 
 	carr_codigo,
 	carr_fecha,
 	carr_circuito
-FROM GROUPBY4.Carrera
+FROM G_DE_GESTION.Carrera
 
-INSERT INTO GROUPBY4.BI_Tiempo
+INSERT INTO G_DE_GESTION.BI_dim_tiempo
 SELECT
 	YEAR(c.carr_fecha),
 	DATEPART(Q, c.carr_fecha),
 	DATEPART(M, c.carr_fecha),
 	DATEPART(W, c.carr_fecha),
 	DATEPART(D, c.carr_fecha)
-FROM GROUPBY4.Carrera c
+FROM G_DE_GESTION.Carrera c
 GROUP BY c.carr_fecha
 
-INSERT INTO GROUPBY4.BI_Auto
-SELECT DISTINCT auto_codigo, auto_escuderia FROM GROUPBY4.Auto
+INSERT INTO G_DE_GESTION.BI_Auto
+SELECT DISTINCT auto_codigo, auto_escuderia FROM G_DE_GESTION.Auto
 
-INSERT INTO GROUPBY4.BI_Vuelta -- Las distintas vueltas que tiene un circuito
+INSERT INTO G_DE_GESTION.BI_Vuelta -- Las distintas vueltas que tiene un circuito
 SELECT DISTINCT tele_numero_vuelta, c.carr_circuito
-FROM GROUPBY4.Telemetria t INNER JOIN GROUPBY4.Carrera c ON t.tele_carrera = c.carr_codigo
+FROM G_DE_GESTION.Telemetria t INNER JOIN G_DE_GESTION.Carrera c ON t.tele_carrera = c.carr_codigo
 ORDER BY c.carr_circuito
 
-INSERT INTO GROUPBY4.BI_Circuito
-SELECT circ_codigo, circ_nombre FROM GROUPBY4.Circuito
+INSERT INTO G_DE_GESTION.BI_Circuito
+SELECT circ_codigo, circ_nombre FROM G_DE_GESTION.Circuito
 
-INSERT INTO GROUPBY4.BI_Sector
+INSERT INTO G_DE_GESTION.BI_Sector
 SELECT 
 	sect_codigo,
 	sect_tipo,
 	sect_tipo_nombre
-FROM GROUPBY4.Sector
-JOIN GROUPBY4.Sector_Tipo ON sect_tipo = sect_tipo_codigo
+FROM G_DE_GESTION.Sector
+JOIN G_DE_GESTION.Sector_Tipo ON sect_tipo = sect_tipo_codigo
 
-INSERT INTO GROUPBY4.BI_Escuderia
-SELECT escu_codigo, escu_nombre FROM GROUPBY4.Escuderia
+INSERT INTO G_DE_GESTION.BI_Escuderia
+SELECT escu_codigo, escu_nombre FROM G_DE_GESTION.Escuderia
 
-INSERT INTO GROUPBY4.BI_Telemetria
+INSERT INTO G_DE_GESTION.BI_Telemetria
 SELECT
 	tele_codigo,
 	tele_auto, 
@@ -165,9 +165,9 @@ SELECT
 	tele_velocidad,
 	tele_combustible,
 	BI_Vuelta_codigo
-FROM GROUPBY4.Telemetria
-JOIN GROUPBY4.BI_Carrera ON carr_codigo = tele_carrera
-JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito = vuelta_circuito
+FROM G_DE_GESTION.Telemetria
+JOIN G_DE_GESTION.BI_Carrera ON carr_codigo = tele_carrera
+JOIN G_DE_GESTION.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito = vuelta_circuito
 
 
   --------------------------------------
@@ -177,7 +177,7 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 	-- Tabla de hechos de vuelta --
 	---------------------------------
 
-	CREATE TABLE GROUPBY4.BI_Performance
+	CREATE TABLE G_DE_GESTION.BI_Performance
 	(
 		tiempo INT NOT NULL, -- (fk)
 		auto INT NOT NULL, -- (fk)
@@ -202,7 +202,7 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 		desgaste_motor DECIMAL(12,2)			
 	)
 	
-	INSERT INTO GROUPBY4.BI_Performance
+	INSERT INTO G_DE_GESTION.BI_Performance
 	SELECT
 		tbi.codigo,
 		t.tele_auto,
@@ -210,133 +210,133 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 		a.auto_escuderia,
 		t.tele_vuelta,
 		(
-			SELECT MAX(tele_combustible) - MIN(tele_combustible) FROM GROUPBY4.BI_Telemetria
+			SELECT MAX(tele_combustible) - MIN(tele_combustible) FROM G_DE_GESTION.BI_Telemetria
 			WHERE tele_vuelta = t.tele_vuelta AND tele_auto = T.tele_auto
 			GROUP BY tele_vuelta
 		),
 			CASE 
 		WHEN (
-				SELECT MAX(t2.tele_tiempo_vuelta) FROM GROUPBY4.BI_Telemetria t2
+				SELECT MAX(t2.tele_tiempo_vuelta) FROM G_DE_GESTION.BI_Telemetria t2
 				WHERE tele_vuelta = t.tele_vuelta AND tele_auto = T.tele_auto
 				GROUP BY t2.tele_vuelta
 			) = 0 THEN NULL 
 				ELSE
 			(
-				SELECT MAX(t2.tele_tiempo_vuelta) FROM GROUPBY4.BI_Telemetria t2
+				SELECT MAX(t2.tele_tiempo_vuelta) FROM G_DE_GESTION.BI_Telemetria t2
 				WHERE tele_vuelta = t.tele_vuelta AND tele_auto = T.tele_auto
 				GROUP BY t2.tele_vuelta
 			)
 		END,
 		MAX(t.tele_velocidad),
 		(	
-			SELECT MAX(tele_velocidad) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.BI_Sector ON tele_sector = BI_sector_codigo
+			SELECT MAX(tele_velocidad) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.BI_Sector ON tele_sector = BI_sector_codigo
 			WHERE tele_vuelta = t.tele_vuelta AND tele_auto = T.tele_auto AND sect_tipo_codigo = 1 -- Sector frenada
 			GROUP BY tele_vuelta
 		),
 		(	
-			SELECT MAX(tele_velocidad) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.BI_Sector ON tele_sector = BI_sector_codigo
+			SELECT MAX(tele_velocidad) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.BI_Sector ON tele_sector = BI_sector_codigo
 			WHERE tele_vuelta = t.tele_vuelta AND tele_auto = T.tele_auto AND sect_tipo_codigo = 2 -- Sector recta
 			GROUP BY tele_vuelta
 		),
 		(	
-			SELECT MAX(tele_velocidad) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.BI_Sector ON tele_sector = BI_sector_codigo
+			SELECT MAX(tele_velocidad) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.BI_Sector ON tele_sector = BI_sector_codigo
 			WHERE tele_vuelta = t.tele_vuelta AND tele_auto = T.tele_auto AND sect_tipo_codigo = 3 -- Sector curva
 			GROUP BY tele_vuelta
 		),
 		(
-			SELECT MAX(neum_tele_profundidad) - MIN(neum_tele_profundidad) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Neumatico_Tele ON tele_codigo = neum_tele_codigo
+			SELECT MAX(neum_tele_profundidad) - MIN(neum_tele_profundidad) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Neumatico_Tele ON tele_codigo = neum_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			AND neum_tele_posicion = 'Trasero Izquierdo'
 			GROUP BY tele_vuelta	
 		),
 		(
-			SELECT MAX(neum_tele_profundidad) - MIN(neum_tele_profundidad) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Neumatico_Tele ON tele_codigo = neum_tele_codigo
+			SELECT MAX(neum_tele_profundidad) - MIN(neum_tele_profundidad) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Neumatico_Tele ON tele_codigo = neum_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			AND neum_tele_posicion = 'Trasero Derecho'
 			GROUP BY tele_vuelta	
 		),
 		(
-			SELECT MAX(neum_tele_profundidad) - MIN(neum_tele_profundidad) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Neumatico_Tele ON tele_codigo = neum_tele_codigo
+			SELECT MAX(neum_tele_profundidad) - MIN(neum_tele_profundidad) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Neumatico_Tele ON tele_codigo = neum_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			AND neum_tele_posicion = 'Delantero Izquierdo'
 			GROUP BY tele_vuelta	
 		),
 		(
-			SELECT MAX(neum_tele_profundidad) - MIN(neum_tele_profundidad) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Neumatico_Tele ON tele_codigo = neum_tele_codigo
+			SELECT MAX(neum_tele_profundidad) - MIN(neum_tele_profundidad) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Neumatico_Tele ON tele_codigo = neum_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			AND neum_tele_posicion = 'Delantero Derecho'
 			GROUP BY tele_vuelta	
 		),
 		(
-			SELECT MAX(freno_tele_pastilla) - MIN(freno_tele_pastilla) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Freno_Tele ON tele_codigo = freno_tele_codigo
+			SELECT MAX(freno_tele_pastilla) - MIN(freno_tele_pastilla) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Freno_Tele ON tele_codigo = freno_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			AND freno_tele_posicion = 'Trasero Izquierdo'
 			GROUP BY tele_vuelta	
 		),
 		(
-			SELECT MAX(freno_tele_pastilla) - MIN(freno_tele_pastilla) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Freno_Tele ON tele_codigo = freno_tele_codigo
+			SELECT MAX(freno_tele_pastilla) - MIN(freno_tele_pastilla) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Freno_Tele ON tele_codigo = freno_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			AND freno_tele_posicion = 'Trasero Derecho'
 			GROUP BY tele_vuelta	
 		),
 		(
-			SELECT MAX(freno_tele_pastilla) - MIN(freno_tele_pastilla) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Freno_Tele ON tele_codigo = freno_tele_codigo
+			SELECT MAX(freno_tele_pastilla) - MIN(freno_tele_pastilla) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Freno_Tele ON tele_codigo = freno_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			AND freno_tele_posicion = 'Delantero Izquierdo'
 			GROUP BY tele_vuelta	
 		),
 		(
-			SELECT MAX(freno_tele_pastilla) - MIN(freno_tele_pastilla) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Freno_Tele ON tele_codigo = freno_tele_codigo
+			SELECT MAX(freno_tele_pastilla) - MIN(freno_tele_pastilla) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Freno_Tele ON tele_codigo = freno_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			AND freno_tele_posicion = 'Delantero Derecho'
 			GROUP BY tele_vuelta	
 		),
 		(
-			SELECT MAX(caja_tele_desgaste) - MIN(caja_tele_desgaste)FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Caja_Tele ON tele_codigo = caja_tele_codigo
+			SELECT MAX(caja_tele_desgaste) - MIN(caja_tele_desgaste)FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Caja_Tele ON tele_codigo = caja_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			GROUP BY tele_vuelta	
 		),
 		(
-			SELECT MAX(motor_tele_potencia) - MIN(motor_tele_potencia) FROM GROUPBY4.BI_Telemetria
-			JOIN GROUPBY4.Motor_Tele ON tele_codigo = motor_tele_codigo
+			SELECT MAX(motor_tele_potencia) - MIN(motor_tele_potencia) FROM G_DE_GESTION.BI_Telemetria
+			JOIN G_DE_GESTION.Motor_Tele ON tele_codigo = motor_tele_codigo
 			WHERE tele_auto = T.tele_auto AND t.tele_vuelta = tele_vuelta
 			GROUP BY tele_vuelta		
 		)	
 		
-	FROM GROUPBY4.BI_Telemetria t
-	JOIN GROUPBY4.BI_Carrera c ON t.tele_carrera = c.carr_codigo
-	JOIN GROUPBY4.BI_Auto a ON a.auto_codigo = t.tele_auto
-	JOIN GROUPBY4.BI_Tiempo tbi	ON YEAR(c.carr_fecha) = tbi.anio AND DATEPART(Q, c.carr_fecha) = tbi.cuatrimestre AND DATEPART(D, c.carr_fecha) = tbi.dia
+	FROM G_DE_GESTION.BI_Telemetria t
+	JOIN G_DE_GESTION.BI_Carrera c ON t.tele_carrera = c.carr_codigo
+	JOIN G_DE_GESTION.BI_Auto a ON a.auto_codigo = t.tele_auto
+	JOIN G_DE_GESTION.BI_dim_tiempo tbi	ON YEAR(c.carr_fecha) = tbi.anio AND DATEPART(Q, c.carr_fecha) = tbi.cuatrimestre AND DATEPART(D, c.carr_fecha) = tbi.dia
 	GROUP BY t.tele_vuelta, tbi.codigo, t.tele_auto, c.carr_circuito, a.auto_escuderia
 	ORDER BY 1, 2, 3, 4, 5
 	
-	ALTER TABLE GROUPBY4.BI_Performance
-	ADD FOREIGN KEY (tiempo) REFERENCES GROUPBY4.BI_Tiempo
-	ALTER TABLE GROUPBY4.BI_Performance
-	ADD FOREIGN KEY (auto) REFERENCES GROUPBY4.BI_Auto
-	ALTER TABLE GROUPBY4.BI_Performance
-	ADD FOREIGN KEY (escuderia) REFERENCES GROUPBY4.BI_Escuderia
-	ALTER TABLE GROUPBY4.BI_Performance
-	ADD FOREIGN KEY (vuelta) REFERENCES GROUPBY4.BI_Vuelta
-	ALTER TABLE GROUPBY4.BI_Performance
-	ADD FOREIGN KEY (circuito) REFERENCES GROUPBY4.BI_Circuito
+	ALTER TABLE G_DE_GESTION.BI_Performance
+	ADD FOREIGN KEY (tiempo) REFERENCES G_DE_GESTION.BI_dim_tiempo
+	ALTER TABLE G_DE_GESTION.BI_Performance
+	ADD FOREIGN KEY (auto) REFERENCES G_DE_GESTION.BI_Auto
+	ALTER TABLE G_DE_GESTION.BI_Performance
+	ADD FOREIGN KEY (escuderia) REFERENCES G_DE_GESTION.BI_Escuderia
+	ALTER TABLE G_DE_GESTION.BI_Performance
+	ADD FOREIGN KEY (vuelta) REFERENCES G_DE_GESTION.BI_Vuelta
+	ALTER TABLE G_DE_GESTION.BI_Performance
+	ADD FOREIGN KEY (circuito) REFERENCES G_DE_GESTION.BI_Circuito
 	GO
 
 	-- Vistas de tabla de hechos de Incidentes
 		
-		CREATE VIEW GROUPBY4.Desgaste AS
+		CREATE VIEW G_DE_GESTION.Desgaste AS
 		SELECT 
 			v.auto [Auto],
 			v.circuito [Circuito],
@@ -351,37 +351,37 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 			AVG(desgaste_neu_der_tra) [Desgaste dre-tra],
 			AVG(desgaste_neu_izq_del) [Desgaste izq-del],
 			AVG(desgaste_neu_izq_tra) [Desgaste izq-tra]
-		FROM GROUPBY4.BI_Performance v
+		FROM G_DE_GESTION.BI_Performance v
 		GROUP BY v.auto, v.circuito, v.vuelta
 		GO
 
-		CREATE VIEW GROUPBY4.Mejor_tiempo_vuelta AS
+		CREATE VIEW G_DE_GESTION.Mejor_tiempo_vuelta AS
 		SELECT 
 			t.anio [Año],
 			v.circuito [Circuito],
 			v.escuderia [Escuderia],
 			MIN(tiempo_vuela) [Mejor Tiempo Vuelta]
-		FROM GROUPBY4.BI_Performance v
-		JOIN GROUPBY4.BI_Tiempo T ON t.codigo = v.tiempo
+		FROM G_DE_GESTION.BI_Performance v
+		JOIN G_DE_GESTION.BI_dim_tiempo T ON t.codigo = v.tiempo
 		GROUP BY t.anio, circuito, escuderia
 		GO
 
-		CREATE VIEW GROUPBY4.Circuitos_mayor_combustible AS
+		CREATE VIEW G_DE_GESTION.Circuitos_mayor_combustible AS
 		SELECT TOP 3
 			v.circuito [Circuito],
 			SUM(combustible_gastado) [Combustible  Gastado]
-		FROM GROUPBY4.BI_Performance v
+		FROM G_DE_GESTION.BI_Performance v
 		GROUP BY circuito
 		ORDER BY SUM(combustible_gastado) DESC
 		GO
 
-		CREATE VIEW GROUPBY4.Mayor_velocidad_por_sector AS
+		CREATE VIEW G_DE_GESTION.Mayor_velocidad_por_sector AS
 		SELECT 
 			v.circuito [Circuito],
 			MAX(v.velocidad_maxima_recta) [Velocidad Maxima Rectas],
 			MAX(v.velocidad_maxima_curva) [Velocidad Maxima Curvas],
 			MAX(v.velocidad_maxima_frenada) [Velocidad Maxima Frenadas]
-		FROM GROUPBY4.BI_Performance v
+		FROM G_DE_GESTION.BI_Performance v
 		GROUP BY circuito
 		GO
 
@@ -389,7 +389,7 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 	-- Tabla de hechos de incidente --
 	----------------------------------
 
-	CREATE TABLE GROUPBY4.BI_Incidente
+	CREATE TABLE G_DE_GESTION.BI_Incidente
 	(
 		fecha INT NOT NULL,
 		auto INT NOT NULL, --(FK)
@@ -401,7 +401,7 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 	)
 	GO
 
-	INSERT INTO GROUPBY4.BI_Incidente
+	INSERT INTO G_DE_GESTION.BI_Incidente
 	SELECT
 		tbi.codigo,
 		ii.invo_auto,
@@ -409,40 +409,40 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 		c.carr_circuito,
 		i.inci_codigo,
 		s.sect_tipo
-	FROM GROUPBY4.Involucrados_Incidente ii
-	JOIN GROUPBY4.Incidente i ON ii.invo_incidente = i.inci_codigo
-	JOIN GROUPBY4.Carrera c ON i.inci_carrera = c.carr_codigo
-	JOIN GROUPBY4.Auto a ON ii.invo_auto = a.auto_codigo
-	JOIN GROUPBY4.Sector s on i.inci_sector = s.sect_codigo
-	JOIN GROUPBY4.BI_Tiempo tbi	ON YEAR(c.carr_fecha) = tbi.anio AND DATEPART(Q, c.carr_fecha) = tbi.cuatrimestre AND DATEPART(D, c.carr_fecha) = tbi.dia
+	FROM G_DE_GESTION.Involucrados_Incidente ii
+	JOIN G_DE_GESTION.Incidente i ON ii.invo_incidente = i.inci_codigo
+	JOIN G_DE_GESTION.Carrera c ON i.inci_carrera = c.carr_codigo
+	JOIN G_DE_GESTION.Auto a ON ii.invo_auto = a.auto_codigo
+	JOIN G_DE_GESTION.Sector s on i.inci_sector = s.sect_codigo
+	JOIN G_DE_GESTION.BI_dim_tiempo tbi	ON YEAR(c.carr_fecha) = tbi.anio AND DATEPART(Q, c.carr_fecha) = tbi.cuatrimestre AND DATEPART(D, c.carr_fecha) = tbi.dia
 
-	ALTER TABLE GROUPBY4.BI_Incidente
-	ADD FOREIGN KEY (auto) REFERENCES GROUPBY4.Auto
-	ALTER TABLE GROUPBY4.BI_Incidente
-	ADD FOREIGN KEY (escuderia) REFERENCES GROUPBY4.Escuderia
-	ALTER TABLE GROUPBY4.BI_Incidente
-	ADD FOREIGN KEY (circuito) REFERENCES GROUPBY4.Circuito
-	ALTER TABLE GROUPBY4.BI_Incidente
-	ADD FOREIGN KEY (incidente) REFERENCES GROUPBY4.Incidente
-	ALTER TABLE GROUPBY4.BI_Incidente
-	ADD FOREIGN KEY (tipo_sector) REFERENCES GROUPBY4.Sector_Tipo
+	ALTER TABLE G_DE_GESTION.BI_Incidente
+	ADD FOREIGN KEY (auto) REFERENCES G_DE_GESTION.Auto
+	ALTER TABLE G_DE_GESTION.BI_Incidente
+	ADD FOREIGN KEY (escuderia) REFERENCES G_DE_GESTION.Escuderia
+	ALTER TABLE G_DE_GESTION.BI_Incidente
+	ADD FOREIGN KEY (circuito) REFERENCES G_DE_GESTION.Circuito
+	ALTER TABLE G_DE_GESTION.BI_Incidente
+	ADD FOREIGN KEY (incidente) REFERENCES G_DE_GESTION.Incidente
+	ALTER TABLE G_DE_GESTION.BI_Incidente
+	ADD FOREIGN KEY (tipo_sector) REFERENCES G_DE_GESTION.Sector_Tipo
 	GO
 
 	-- Vistas de tabla de hechos de Incidentes
 
-		CREATE VIEW GROUPBY4.Circuitos_Mas_Peligrosos AS
+		CREATE VIEW G_DE_GESTION.Circuitos_Mas_Peligrosos AS
 		SELECT 
 			t.anio [Año],
 			i.circuito [Circuito],
 			COUNT(DISTINCT i.incidente) [Cantidad de Incidentes]
-		FROM GROUPBY4.BI_Incidente i
-		JOIN GROUPBY4.BI_Tiempo t ON i.fecha = t.codigo
+		FROM G_DE_GESTION.BI_Incidente i
+		JOIN G_DE_GESTION.BI_dim_tiempo t ON i.fecha = t.codigo
 		WHERE CONVERT(CHAR(4), t.anio) + CONVERT(CHAR(4), i.circuito) IN (
 				SELECT TOP 3
 					CONVERT(CHAR(4), T2.anio) + 
 					CONVERT(CHAR(4), I2.circuito)	
-				FROM GROUPBY4.BI_Incidente I2
-				JOIN GROUPBY4.BI_Tiempo t2 ON I2.fecha = T2.codigo
+				FROM G_DE_GESTION.BI_Incidente I2
+				JOIN G_DE_GESTION.BI_dim_tiempo t2 ON I2.fecha = T2.codigo
 				where t.anio = t2.anio 
 				GROUP BY t2.anio, i2.circuito
 				ORDER BY COUNT(DISTINCT i2.incidente)
@@ -450,14 +450,14 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 		GROUP BY t.anio, i.circuito
 		GO
 
-		CREATE VIEW GROUPBY4.Incidentes_Escuderia_Tipo_Sector AS
+		CREATE VIEW G_DE_GESTION.Incidentes_Escuderia_Tipo_Sector AS
 		SELECT
 			t.anio [Año],
 			i.escuderia [Escuderia],
 			i.tipo_sector [Tipo de Sector],
 			COUNT(i.incidente) [Cantidad de Incidentes]
-		FROM GROUPBY4.BI_Incidente i
-		JOIN GROUPBY4.BI_Tiempo t ON t.codigo = i.fecha
+		FROM G_DE_GESTION.BI_Incidente i
+		JOIN G_DE_GESTION.BI_dim_tiempo t ON t.codigo = i.fecha
 		GROUP BY t.anio, i.escuderia, i.tipo_sector
 		GO
  
@@ -465,7 +465,7 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 	-- Tabla de hechos de parada --
 	-------------------------------
 
-	CREATE TABLE GROUPBY4.BI_Parada
+	CREATE TABLE G_DE_GESTION.BI_Parada
 	(
 		fecha CHAR(4) NOT NULL,
 		auto INT NOT NULL, -- (FK)
@@ -476,7 +476,7 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 		PRIMARY KEY(fecha, auto, escuderia, circuito, parada)
 	)
 
-	INSERT INTO GROUPBY4.BI_Parada
+	INSERT INTO G_DE_GESTION.BI_Parada
 	SELECT 
 		tbi.codigo,
 		a.auto_codigo,
@@ -484,49 +484,49 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 		c.carr_circuito,
 		p.para_codigo,
 		p.para_tiempo
-	FROM GROUPBY4.Parada p
-	JOIN GROUPBY4.Carrera c ON p.para_carrera = c.carr_codigo
-	JOIN GROUPBY4.Auto a ON p.para_auto = a.auto_codigo 
-	JOIN GROUPBY4.BI_Tiempo tbi	ON YEAR(c.carr_fecha) = tbi.anio AND DATEPART(Q, c.carr_fecha) = tbi.cuatrimestre AND DATEPART(D, c.carr_fecha) = tbi.dia
+	FROM G_DE_GESTION.Parada p
+	JOIN G_DE_GESTION.Carrera c ON p.para_carrera = c.carr_codigo
+	JOIN G_DE_GESTION.Auto a ON p.para_auto = a.auto_codigo 
+	JOIN G_DE_GESTION.BI_dim_tiempo tbi	ON YEAR(c.carr_fecha) = tbi.anio AND DATEPART(Q, c.carr_fecha) = tbi.cuatrimestre AND DATEPART(D, c.carr_fecha) = tbi.dia
 
-	ALTER TABLE GROUPBY4.BI_Parada
-	ADD FOREIGN KEY (auto) REFERENCES GROUPBY4.Auto
-	ALTER TABLE GROUPBY4.BI_Parada
-	ADD FOREIGN KEY (escuderia) REFERENCES GROUPBY4.Escuderia
-	ALTER TABLE GROUPBY4.BI_Parada
-	ADD FOREIGN KEY (circuito) REFERENCES GROUPBY4.Circuito
-	ALTER TABLE GROUPBY4.BI_Parada
-	ADD FOREIGN KEY (parada) REFERENCES GROUPBY4.Parada
+	ALTER TABLE G_DE_GESTION.BI_Parada
+	ADD FOREIGN KEY (auto) REFERENCES G_DE_GESTION.Auto
+	ALTER TABLE G_DE_GESTION.BI_Parada
+	ADD FOREIGN KEY (escuderia) REFERENCES G_DE_GESTION.Escuderia
+	ALTER TABLE G_DE_GESTION.BI_Parada
+	ADD FOREIGN KEY (circuito) REFERENCES G_DE_GESTION.Circuito
+	ALTER TABLE G_DE_GESTION.BI_Parada
+	ADD FOREIGN KEY (parada) REFERENCES G_DE_GESTION.Parada
 	GO
 
 	-- Vistas de tabla de hechos de Paradas
 		
-		CREATE VIEW GROUPBY4.Tiempo_Promedio_En_Paradas AS
+		CREATE VIEW G_DE_GESTION.Tiempo_Promedio_En_Paradas AS
 		SELECT 
 			t.cuatrimestre [Cuatrimestre],
 			p.escuderia [Escuderia],
 			AVG(p.tiempo_parada) [Tiempo Promedio En Paradas]
-		FROM GROUPBY4.BI_Parada p
-		JOIN GROUPBY4.BI_Tiempo	t ON T.codigo = p.fecha
+		FROM G_DE_GESTION.BI_Parada p
+		JOIN G_DE_GESTION.BI_dim_tiempo	t ON T.codigo = p.fecha
 		GROUP BY t.cuatrimestre, p.escuderia
 		GO
 
-		CREATE VIEW GROUPBY4.Cant_Paradas_Circuito_Escuderia AS
+		CREATE VIEW G_DE_GESTION.Cant_Paradas_Circuito_Escuderia AS
 		SELECT 
 			t.anio [Año], 
 			p.circuito [Circuito],
 			p.escuderia [Escuderia],
 			COUNT(p.parada) [Cantidad de Paradas]
-		FROM GROUPBY4.BI_Parada p
-		JOIN GROUPBY4.BI_Tiempo	t ON T.codigo = p.fecha
+		FROM G_DE_GESTION.BI_Parada p
+		JOIN G_DE_GESTION.BI_dim_tiempo	t ON T.codigo = p.fecha
 		GROUP BY t.anio, p.circuito, p.escuderia
 		GO
 
-		CREATE VIEW GROUPBY4.Circuitos_Mayor_Tiempo_Boxes AS
+		CREATE VIEW G_DE_GESTION.Circuitos_Mayor_Tiempo_Boxes AS
 		SELECT TOP 3
 			p.circuito [Circuito],
 			SUM(p.tiempo_parada) [Tiempo En Parada]
-		FROM GROUPBY4.BI_Parada p
+		FROM G_DE_GESTION.BI_Parada p
 		GROUP BY p.circuito
 		GO
 
@@ -535,13 +535,13 @@ JOIN GROUPBY4.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circuito 
 --------------- TESTS ----------------
 --------------------------------------
 
--- SELECT * FROM GROUPBY4.Circuitos_Mas_Peligrosos
--- SELECT * FROM GROUPBY4.Incidentes_Escuderia_Tipo_Sector
--- SELECT * FROM GROUPBY4.Tiempo_Promedio_En_Paradas
--- SELECT * FROM GROUPBY4.Cant_Paradas_Circuito_Escuderia
--- SELECT * FROM GROUPBY4.Circuitos_Mayor_Tiempo_Boxes
--- SELECT * FROM GROUPBY4.Circuitos_mayor_combustible
--- SELECT * FROM GROUPBY4.Desgaste
--- SELECT * FROM GROUPBY4.Mayor_velocidad_por_sector 
--- SELECT * FROM GROUPBY4.Mejor_tiempo_vuelta 
+-- SELECT * FROM G_DE_GESTION.Circuitos_Mas_Peligrosos
+-- SELECT * FROM G_DE_GESTION.Incidentes_Escuderia_Tipo_Sector
+-- SELECT * FROM G_DE_GESTION.Tiempo_Promedio_En_Paradas
+-- SELECT * FROM G_DE_GESTION.Cant_Paradas_Circuito_Escuderia
+-- SELECT * FROM G_DE_GESTION.Circuitos_Mayor_Tiempo_Boxes
+-- SELECT * FROM G_DE_GESTION.Circuitos_mayor_combustible
+-- SELECT * FROM G_DE_GESTION.Desgaste
+-- SELECT * FROM G_DE_GESTION.Mayor_velocidad_por_sector 
+-- SELECT * FROM G_DE_GESTION.Mejor_tiempo_vuelta 
 
