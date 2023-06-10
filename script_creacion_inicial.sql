@@ -48,7 +48,7 @@ IF OBJECT_ID('G_DE_GESTION.provincia') IS NOT NULL DROP TABLE G_DE_GESTION.provi
 GO
 
 
--- Creacion de Tablas
+----- Creacion de Tablas -----
 CREATE TABLE G_DE_GESTION.provincia(
 	provincia_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	provincia_descripcion NVARCHAR(255) NOT NULL
@@ -360,7 +360,7 @@ GO
 
 
 
--- Funciones
+----- Funciones -----
 
 CREATE FUNCTION G_DE_GESTION.obtener_provincia_codigo (@provincia_descripcion VARCHAR(255))
 RETURNS DECIMAL(18,0)
@@ -428,7 +428,7 @@ END
 GO
 
 
--- Procedures
+----- Procedures -----
 
 CREATE PROCEDURE G_DE_GESTION.migrar_tipo_movilidad AS
 BEGIN
@@ -1139,7 +1139,7 @@ END
 GO
 
 
--- Migracion
+----- Migracion OLTP -----
 BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_tipo_movilidad
 	EXECUTE G_DE_GESTION.migrar_tipo_paquete
@@ -1179,7 +1179,7 @@ BEGIN TRANSACTION
 COMMIT TRANSACTION
 GO
 
--- Eliminacion de FUNCTIONs y PROCEDUREs
+----- Drop de FUNCTIONs y PROCEDUREs -----
 DROP FUNCTION G_DE_GESTION.obtener_provincia_codigo
 DROP FUNCTION G_DE_GESTION.obtener_codigo_localidad
 DROP FUNCTION G_DE_GESTION.obtener_codigo_tipo_direccion
