@@ -5,7 +5,7 @@ IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'G_DE_GESTION')
 	THROW 51000, 'No se encontro esquema. Ejecutar primero script_creacion_inicial.sql', 1
 GO
 
-IF OBJECT_ID('G_DE_GESTION.Circuitos_Mas_Peligrosos', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_Mas_Peligrosos;
+/*IF OBJECT_ID('G_DE_GESTION.Circuitos_Mas_Peligrosos', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_Mas_Peligrosos;
 IF OBJECT_ID('G_DE_GESTION.Incidentes_Escuderia_Tipo_Sector', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Incidentes_Escuderia_Tipo_Sector;
 IF OBJECT_ID('G_DE_GESTION.Tiempo_Promedio_En_Paradas', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Tiempo_Promedio_En_Paradas;
 IF OBJECT_ID('G_DE_GESTION.Cant_Paradas_Circuito_Escuderia', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Cant_Paradas_Circuito_Escuderia;
@@ -14,7 +14,7 @@ IF OBJECT_ID('G_DE_GESTION.Circuitos_mayor_combustible', 'V') IS NOT NULL DROP V
 IF OBJECT_ID('G_DE_GESTION.Desgaste', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Desgaste;
 IF OBJECT_ID('G_DE_GESTION.Mayor_velocidad_por_sector ', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Mayor_velocidad_por_sector ;
 IF OBJECT_ID('G_DE_GESTION.Mejor_tiempo_vuelta ', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Mejor_tiempo_vuelta;
-
+*/
 
 
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tiempo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tiempo
@@ -148,6 +148,24 @@ GO
 
 
 ----- Hechos ----
+CREATE TABLE G_DE_GESTION.BI_hecho_pedidos (
+	dia_id DECIMAL(18,0) IDENTITY(1,1),
+	local_id DECIMAL(18,0) IDENTITY(1,1),
+	rango_horario_id INT IDENTITY(1,1),
+	region_id DECIMAL(18,0) IDENTITY(1,1),
+	rango_etario_id INT IDENTITY(1,1),
+	tipo_local_id DECIMAL(18,0) IDENTITY(1,1),
+	tiempo_id DECIMAL(18,0) IDENTITY(1,1),
+	estado_pedido_id DECIMAL(18,0) IDENTITY(1,1),
+	cantidad_pedidos DECIMAL(18,0) NOT NULL,
+	pedido_total_servicio DECIMAL(18,0) NOT NULL,
+	pedido_precio_envio DECIMAL(18,0) NOT NULL,
+	pedido_total_cupones DECIMAL(18,0) NOT NULL,
+	pedido_calificacion DECIMAL(18,0) NOT NULL,
+	PRIMARY KEY(dia_id, local_id, rango_horario_id, region_id, rango_etario_id, tipo_local_id, tiempo_id, estado_pedido_id)
+)
+GO
+
 
 
 ----- Procedures -----
