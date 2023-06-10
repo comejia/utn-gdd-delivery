@@ -2,7 +2,7 @@ USE GD1C2023
 GO
 
 IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'G_DE_GESTION')
-	THROW 51000, 'No se encontro esquema. Este script debe ejecutarse despues de script_creacion_inicial.sql', 1
+	THROW 51000, 'No se encontro esquema. Ejecutar primero script_creacion_inicial.sql', 1
 GO
 
 IF OBJECT_ID('G_DE_GESTION.Circuitos_Mas_Peligrosos', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_Mas_Peligrosos;
@@ -147,16 +147,197 @@ CREATE TABLE G_DE_GESTION.BI_dim_estado_reclamo (
 GO
 
 
+----- Hechos ----
+
+
+----- Procedures -----
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tiempo AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_tiempo(anio, mes)
+	SELECT DISTINCT 
+		YEAR(p.pedido_fecha),
+		MONTH(p.pedido_fecha)
+	FROM G_DE_GESTION.pedido p
+	UNION
+	SELECT DISTINCT 
+		YEAR(r.reclamo_fecha),
+		MONTH(r.reclamo_fecha)
+	FROM G_DE_GESTION.reclamo r
+	UNION
+	SELECT DISTINCT 
+		YEAR(em.envio_mensajeria_fecha),
+		MONTH(em.envio_mensajeria_fecha)
+	FROM G_DE_GESTION.envio_mensajeria em
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_dia AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_dia(dia)
+	SELECT DISTINCT h.horario_dia
+	FROM G_DE_GESTION.horario h
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_region AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_region(provincia_descripcion, localidad_descripcion)
+	SELECT DISTINCT p.provincia_descripcion, l.localidad_descripcion
+	FROM G_DE_GESTION.localidad l
+	JOIN G_DE_GESTION.provincia p ON (p.provincia_id = l.provincia_id)
+END
+GO
+
+-- NOTA: preguntar por la migracion
+-- Ayudar: crear CURSOR e implementar logica para leer fila por fila
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_rango_horario AS
+BEGIN
+	--INSERT INTO G_DE_GESTION.BI_dim_rango_horario(rango_horario)
+	--SELECT DISTINCT h.horario_hora_apertura, h.horario_hora_cierre
+	--FROM G_DE_GESTION.horario h
+	PRINT 'Procedure migrar_BI_dim_rango_horario not implemented'
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_rango_etario AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_rango_etario(rango_etario)
+	SELECT DISTINCT
+		(case
+			when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) < 25 then '<25' 
+			when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
+			when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
+			when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) > 55 then '>55'
+		end)
+	FROM G_DE_GESTION.usuario u
+	UNION
+	SELECT DISTINCT
+		(case
+			when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) < 25 then '<25' 
+			when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
+			when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
+			when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) > 55 then '>55'
+		end)
+	FROM G_DE_GESTION.repartidor r
+	UNION
+	SELECT DISTINCT
+		(case
+			when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) < 25 then '<25' 
+			when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
+			when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
+			when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) > 55 then '>55'
+		end)
+	FROM G_DE_GESTION.operador_reclamo o
+END
+GO
+
+-- NOTA: ver como migrar esto
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_local AS
+BEGIN
+	--INSERT INTO G_DE_GESTION.BI_dim_tipo_local(tipo_local_descripcion, categoria_descripcion)
+	PRINT 'Procedure migrar_BI_dim_tipo_local not implemented'
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_local AS
+BEGIN
+	/*INSERT INTO G_DE_GESTION.BI_dim_local(
+		local_nombre,
+		local_descripcion,
+		local_direccion,
+		tipo_local_id
+	)*/
+	PRINT 'Procedure migrar_BI_dim_local not implemented'
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_medio_pago AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_tipo_medio_pago(tipo_medio_pago_descripcion)
+	SELECT mp.tipo_medio_pago_descripcion
+	FROM G_DE_GESTION.tipo_medio_pago mp
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_movilidad AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_tipo_movilidad(tipo_movilidad_descripcion)
+	SELECT tm.tipo_movilidad_descripcion
+	FROM G_DE_GESTION.tipo_movilidad tm
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_paquete AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_tipo_paquete(tipo_paquete_descripcion)
+	SELECT tp.tipo_paquete_descripcion
+	FROM G_DE_GESTION.tipo_paquete tp
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_pedido AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_estado_pedido(estado_pedido_descripcion)
+	SELECT ep.estado_pedido_descripcion
+	FROM G_DE_GESTION.estado_pedido ep
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_estado_envio_mensajeria(estado_envio_mensajeria_descripcion)
+	SELECT eem.estado_envio_mensajeria_descripcion
+	FROM G_DE_GESTION.estado_envio_mensajeria eem
+END
+GO
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_reclamo AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_estado_reclamo(estado_reclamo_descripcion)
+	SELECT er.estado_reclamo_descripcion
+	FROM G_DE_GESTION.estado_reclamo er
+END
+GO
+
+----- Migracion OLAP -----
+BEGIN TRANSACTION
+	EXECUTE G_DE_GESTION.migrar_BI_dim_tiempo
+	EXECUTE G_DE_GESTION.migrar_BI_dim_dia
+	EXECUTE G_DE_GESTION.migrar_BI_dim_region
+	EXECUTE G_DE_GESTION.migrar_BI_dim_rango_horario
+	EXECUTE G_DE_GESTION.migrar_BI_dim_rango_etario
+	EXECUTE G_DE_GESTION.migrar_BI_dim_tipo_local
+	EXECUTE G_DE_GESTION.migrar_BI_dim_local
+	EXECUTE G_DE_GESTION.migrar_BI_dim_tipo_medio_pago
+	EXECUTE G_DE_GESTION.migrar_BI_dim_tipo_movilidad
+	EXECUTE G_DE_GESTION.migrar_BI_dim_tipo_paquete
+	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_pedido
+	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
+	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_reclamo
+COMMIT TRANSACTION
+GO
+
+-- Drop de FUNCTIONs y PROCEDUREs
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tiempo
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_dia
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_region
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_rango_horario
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_rango_etario
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_local
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_local
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_medio_pago
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_movilidad
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_paquete
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_pedido
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_reclamo
+GO
 
 
 
 
 
-
-
-
-
-
+/*
 CREATE TABLE G_DE_GESTION.BI_Telemetria 
 (
 	tele_codigo INT PRIMARY KEY,
@@ -182,15 +363,6 @@ SELECT
 	carr_circuito
 FROM G_DE_GESTION.Carrera
 
-INSERT INTO G_DE_GESTION.BI_dim_tiempo
-SELECT
-	YEAR(c.carr_fecha),
-	DATEPART(Q, c.carr_fecha),
-	DATEPART(M, c.carr_fecha),
-	DATEPART(W, c.carr_fecha),
-	DATEPART(D, c.carr_fecha)
-FROM G_DE_GESTION.Carrera c
-GROUP BY c.carr_fecha
 
 INSERT INTO G_DE_GESTION.BI_Auto
 SELECT DISTINCT auto_codigo, auto_escuderia FROM G_DE_GESTION.Auto
@@ -593,7 +765,7 @@ JOIN G_DE_GESTION.BI_Vuelta ON tele_numero_vuelta = vuelta_numero AND carr_circu
 		GROUP BY p.circuito
 		GO
 
-
+		*/
 --------------------------------------
 --------------- TESTS ----------------
 --------------------------------------
