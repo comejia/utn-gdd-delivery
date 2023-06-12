@@ -361,7 +361,6 @@ GO
 
 
 ----- Funciones -----
-
 CREATE FUNCTION G_DE_GESTION.obtener_provincia_codigo (@provincia_descripcion VARCHAR(255))
 RETURNS DECIMAL(18,0)
 AS
@@ -429,7 +428,6 @@ GO
 
 
 ----- Procedures -----
-
 CREATE PROCEDURE G_DE_GESTION.migrar_tipo_movilidad AS
 BEGIN
 	INSERT INTO G_DE_GESTION.tipo_movilidad(tipo_movilidad_descripcion)

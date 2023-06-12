@@ -19,10 +19,10 @@ IF OBJECT_ID('G_DE_GESTION.Mejor_tiempo_vuelta ', 'V') IS NOT NULL DROP VIEW G_D
 
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tiempo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tiempo
 IF OBJECT_ID('G_DE_GESTION.BI_dim_dia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_dia
-IF OBJECT_ID('G_DE_GESTION.BI_dim_region', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_region
 IF OBJECT_ID('G_DE_GESTION.BI_dim_rango_horario', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_rango_horario
 IF OBJECT_ID('G_DE_GESTION.BI_dim_rango_etario', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_rango_etario
 IF OBJECT_ID('G_DE_GESTION.BI_dim_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_local
+IF OBJECT_ID('G_DE_GESTION.BI_dim_region', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_region
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_local
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_medio_pago', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_medio_pago
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_movilidad', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_movilidad
@@ -104,8 +104,8 @@ CREATE TABLE G_DE_GESTION.BI_dim_local(
 	local_nombre NVARCHAR(100) NOT NULL,
 	local_descripcion NVARCHAR(255) NOT NULL,
 	local_direccion NVARCHAR(255) NOT NULL,
+	region_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_region NOT NULL,
 	tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_local
-	--localidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.localidad,
 	--categoria_id DECIMAL(18,0) REFERENCES G_DE_GESTION.categoria
 )
 GO
@@ -149,20 +149,20 @@ GO
 
 ----- Hechos ----
 CREATE TABLE G_DE_GESTION.BI_hecho_pedidos (
-	dia_id DECIMAL(18,0) IDENTITY(1,1),
-	local_id DECIMAL(18,0) IDENTITY(1,1),
-	rango_horario_id INT IDENTITY(1,1),
-	region_id DECIMAL(18,0) IDENTITY(1,1),
-	rango_etario_id INT IDENTITY(1,1),
-	tipo_local_id DECIMAL(18,0) IDENTITY(1,1),
-	tiempo_id DECIMAL(18,0) IDENTITY(1,1),
-	estado_pedido_id DECIMAL(18,0) IDENTITY(1,1),
+	dia_id DECIMAL(18,0),
+	local_id DECIMAL(18,0),
+	rango_horario_id INT,
+	region_id DECIMAL(18,0),
+	rango_etario_id INT,
+	--tipo_local_id DECIMAL(18,0), PK/FK No se puede migrar por tipo de local ya que no existe la categoria
+	tiempo_id DECIMAL(18,0),
+	estado_pedido_id DECIMAL(18,0),
 	cantidad_pedidos DECIMAL(18,0) NOT NULL,
 	pedido_total_servicio DECIMAL(18,0) NOT NULL,
 	pedido_precio_envio DECIMAL(18,0) NOT NULL,
 	pedido_total_cupones DECIMAL(18,0) NOT NULL,
 	pedido_calificacion DECIMAL(18,0) NOT NULL,
-	PRIMARY KEY(dia_id, local_id, rango_horario_id, region_id, rango_etario_id, tipo_local_id, tiempo_id, estado_pedido_id)
+	PRIMARY KEY(dia_id, local_id, rango_horario_id, region_id, rango_etario_id, tiempo_id, estado_pedido_id)
 )
 GO
 
@@ -249,23 +249,32 @@ BEGIN
 END
 GO
 
--- NOTA: ver como migrar esto
+-- NOTA: ver como migrar esto. Se opta por migrar con los datos de ejemplo en enunciado
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_local AS
 BEGIN
-	--INSERT INTO G_DE_GESTION.BI_dim_tipo_local(tipo_local_descripcion, categoria_descripcion)
-	PRINT 'Procedure migrar_BI_dim_tipo_local not implemented'
+	INSERT INTO G_DE_GESTION.BI_dim_tipo_local(tipo_local_descripcion, categoria_descripcion)
+	SELECT tl.tipo_local_descripcion, c.categoria_descripcion
+	FROM G_DE_GESTION.categoria c
+	JOIN G_DE_GESTION.tipo_local tl ON (tl.tipo_local_id = c.tipo_local_id)
 END
 GO
 
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_local AS
 BEGIN
-	/*INSERT INTO G_DE_GESTION.BI_dim_local(
+	INSERT INTO G_DE_GESTION.BI_dim_local(
 		local_nombre,
 		local_descripcion,
 		local_direccion,
-		tipo_local_id
-	)*/
-	PRINT 'Procedure migrar_BI_dim_local not implemented'
+		region_id
+	)
+	SELECT l.local_nombre,
+		l.local_descripcion,
+		l.local_direccion,
+		r.region_id
+	FROM G_DE_GESTION.local l
+	JOIN G_DE_GESTION.localidad lo ON (lo.localidad_id = l.localidad_id)
+	JOIN G_DE_GESTION.provincia p ON (p.provincia_id = lo.provincia_id)
+	JOIN G_DE_GESTION.BI_dim_region r ON (r.localidad_descripcion = lo.localidad_descripcion AND r.provincia_descripcion = p.provincia_descripcion)
 END
 GO
 
