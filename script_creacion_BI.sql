@@ -16,6 +16,7 @@ IF OBJECT_ID('G_DE_GESTION.Mayor_velocidad_por_sector ', 'V') IS NOT NULL DROP V
 IF OBJECT_ID('G_DE_GESTION.Mejor_tiempo_vuelta ', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Mejor_tiempo_vuelta;
 */
 
+IF OBJECT_ID('G_DE_GESTION.BI_hecho_pedidos', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_pedidos
 
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tiempo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tiempo
 IF OBJECT_ID('G_DE_GESTION.BI_dim_dia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_dia
@@ -42,7 +43,7 @@ CREATE TABLE G_DE_GESTION.BI_dim_tiempo(
 GO
 
 CREATE TABLE G_DE_GESTION.BI_dim_dia(
-	dia_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	dia_id DECIMAL(18,0) PRIMARY KEY,
 	dia NVARCHAR(50) NOT NULL,
 )
 GO
@@ -59,7 +60,6 @@ CREATE TABLE G_DE_GESTION.localidad(
 	provincia_id DECIMAL(18,0) REFERENCES G_DE_GESTION.provincia
 )
 GO*/
-
 CREATE TABLE G_DE_GESTION.BI_dim_region(
 	region_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	provincia_descripcion NVARCHAR(255) NOT NULL,
@@ -67,11 +67,18 @@ CREATE TABLE G_DE_GESTION.BI_dim_region(
 )
 GO
 
-CREATE TABLE G_DE_GESTION.BI_dim_rango_horario(
+/*CREATE TABLE G_DE_GESTION.BI_dim_rango_horario(
 	rango_horario_id INT IDENTITY(1,1) PRIMARY KEY,
 	rango_horario nvarchar(50) NOT NULL
 )
+GO*/
+CREATE TABLE G_DE_GESTION.BI_dim_rango_horario(
+	rango_horario_id INT IDENTITY(1,1) PRIMARY KEY,
+	rango_horario_inicio DECIMAL(18,0) NOT NULL,
+	rango_horario_fin DECIMAL(18,0) NOT NULL
+)
 GO
+
 
 CREATE TABLE G_DE_GESTION.BI_dim_rango_etario(
 	rango_etario_id INT IDENTITY(1,1) PRIMARY KEY,
@@ -91,7 +98,6 @@ CREATE TABLE G_DE_GESTION.categoria(
 	tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.tipo_local
 )
 GO*/
-
 CREATE TABLE G_DE_GESTION.BI_dim_tipo_local(
 	tipo_local_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	tipo_local_descripcion NVARCHAR(50) NOT NULL,
@@ -191,9 +197,20 @@ GO
 
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_dia AS
 BEGIN
-	INSERT INTO G_DE_GESTION.BI_dim_dia(dia)
-	SELECT DISTINCT h.horario_dia
+	INSERT INTO G_DE_GESTION.BI_dim_dia(dia_id, dia)
+	SELECT DISTINCT 
+		(CASE
+			WHEN h.horario_dia = 'Lunes' THEN 1
+			WHEN h.horario_dia = 'Martes' THEN 2
+			WHEN h.horario_dia = 'Miercoles' THEN 3
+			WHEN h.horario_dia = 'Jueves' THEN 4
+			WHEN h.horario_dia = 'Viernes' THEN 5
+			WHEN h.horario_dia = 'Sabado' THEN 6
+			WHEN h.horario_dia = 'Domingo' THEN 7
+		END),
+		h.horario_dia
 	FROM G_DE_GESTION.horario h
+	ORDER BY 1
 END
 GO
 
@@ -206,14 +223,48 @@ BEGIN
 END
 GO
 
--- NOTA: preguntar por la migracion
+-- NOTA: preguntar por la migracion. Hay rangos de 1hs?
 -- Ayudar: crear CURSOR e implementar logica para leer fila por fila
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_rango_horario AS
 BEGIN
-	--INSERT INTO G_DE_GESTION.BI_dim_rango_horario(rango_horario)
-	--SELECT DISTINCT h.horario_hora_apertura, h.horario_hora_cierre
-	--FROM G_DE_GESTION.horario h
-	PRINT 'Procedure migrar_BI_dim_rango_horario not implemented'
+	DECLARE @apertura DECIMAL(18,0)
+	DECLARE @cierre DECIMAL(18,0)
+	DECLARE @next_rango DECIMAL(18,0)
+
+	DECLARE cursor_horario CURSOR FOR
+	SELECT DISTINCT h.horario_hora_apertura, h.horario_hora_cierre FROM G_DE_GESTION.horario h
+
+	OPEN cursor_horario
+	FETCH NEXT FROM cursor_horario INTO @apertura, @cierre
+	SET @next_rango = @apertura
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		WHILE @apertura < @cierre
+		BEGIN
+			IF @apertura + 2 <= @cierre
+			BEGIN
+				SET @next_rango = @next_rango + 2
+				INSERT INTO G_DE_GESTION.BI_dim_rango_horario(rango_horario_inicio, rango_horario_fin)
+				VALUES(@apertura, @next_rango)
+				--VALUES(STR(@apertura, 2, 0) + '-' + STR(@next_rango, 2, 0))
+				--PRINT STR(@apertura, 2, 0) + '-' + STR(@next_rango, 2, 0)
+			END
+			ELSE
+			BEGIN
+				SET @next_rango = @next_rango + 1
+				INSERT INTO G_DE_GESTION.BI_dim_rango_horario(rango_horario_inicio, rango_horario_fin)
+				VALUES(@apertura, @next_rango)
+				--VALUES(STR(@apertura, 2, 0) + '-' + STR(@next_rango, 2, 0))
+				--PRINT STR(@apertura, 2, 0) + '-' + STR(@next_rango, 2, 0)
+			END
+			SET @apertura = @next_rango
+		END
+		FETCH NEXT FROM cursor_horario INTO @apertura, @cierre
+		SET @next_rango = @apertura
+	END
+
+	CLOSE cursor_horario
+	DEALLOCATE cursor_horario
 END
 GO
 
@@ -275,6 +326,7 @@ BEGIN
 	JOIN G_DE_GESTION.localidad lo ON (lo.localidad_id = l.localidad_id)
 	JOIN G_DE_GESTION.provincia p ON (p.provincia_id = lo.provincia_id)
 	JOIN G_DE_GESTION.BI_dim_region r ON (r.localidad_descripcion = lo.localidad_descripcion AND r.provincia_descripcion = p.provincia_descripcion)
+	ORDER BY l.local_id
 END
 GO
 
@@ -326,6 +378,62 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_hecho_pedidos AS
+BEGIN
+	SET DATEFIRST 1
+	INSERT INTO G_DE_GESTION.BI_hecho_pedidos(
+		dia_id,
+		local_id,
+		rango_horario_id,
+		region_id,
+		rango_etario_id,
+		tiempo_id,
+		estado_pedido_id,
+		cantidad_pedidos,
+		pedido_total_servicio,
+		pedido_precio_envio,
+		pedido_total_cupones,
+		pedido_calificacion
+	)
+	SELECT
+		dd.dia_id,
+		dl.local_id,
+		drh.rango_horario_id,
+		dl.region_id,
+		dre.rango_etario_id,
+		dt.tiempo_id,
+		dep.estado_pedido_id,
+		COUNT(*),
+		SUM(p.pedido_total_servicio),
+		SUM(p.pedido_precio_envio),
+		SUM(p.pedido_total_cupones),
+		SUM(p.pedido_calificacion) / COUNT(*) -- confirmar cuenta
+	FROM G_DE_GESTION.pedido p
+	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = DATEPART(DW, p.pedido_fecha))
+	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = p.local_id)
+	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (DATEPART(HOUR, p.pedido_fecha) >= drh.rango_horario_inicio
+												AND DATEPART(HOUR, p.pedido_fecha) <= drh.rango_horario_fin)
+	JOIN G_DE_GESTION.usuario u ON (u.usuario_id = p.usuario_id)
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario = 
+					(case
+						when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) < 25 then '<25' 
+						when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
+						when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
+						when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) > 55 then '>55'
+					end))
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.anio = YEAR(p.pedido_fecha) AND dt.mes = MONTH(p.pedido_fecha))
+	JOIN G_DE_GESTION.BI_dim_estado_pedido dep ON (dep.estado_pedido_id = p.estado_pedido_id)
+	GROUP BY
+		dd.dia_id,
+		dl.local_id,
+		drh.rango_horario_id,
+		dl.region_id,
+		dre.rango_etario_id,
+		dt.tiempo_id,
+		dep.estado_pedido_id
+END
+GO
+
 ----- Migracion OLAP -----
 BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_BI_dim_tiempo
@@ -341,6 +449,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_pedido
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_reclamo
+	EXECUTE G_DE_GESTION.migrar_BI_hecho_pedidos
 COMMIT TRANSACTION
 GO
 
@@ -358,6 +467,7 @@ DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_paquete
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_reclamo
+DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_pedidos
 GO
 
 
