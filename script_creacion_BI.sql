@@ -2,19 +2,13 @@ USE GD1C2023
 GO
 
 IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'G_DE_GESTION')
-	THROW 51000, 'No se encontro esquema. Ejecutar primero script_creacion_inicial.sql', 1
+	THROW 51000, 'No se encontro esquema G_DE_GESTION. Ejecutar primero script_creacion_inicial.sql', 1
 GO
 
-/*IF OBJECT_ID('G_DE_GESTION.Circuitos_Mas_Peligrosos', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_Mas_Peligrosos;
-IF OBJECT_ID('G_DE_GESTION.Incidentes_Escuderia_Tipo_Sector', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Incidentes_Escuderia_Tipo_Sector;
-IF OBJECT_ID('G_DE_GESTION.Tiempo_Promedio_En_Paradas', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Tiempo_Promedio_En_Paradas;
-IF OBJECT_ID('G_DE_GESTION.Cant_Paradas_Circuito_Escuderia', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Cant_Paradas_Circuito_Escuderia;
-IF OBJECT_ID('G_DE_GESTION.Circuitos_Mayor_Tiempo_Boxes', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_Mayor_Tiempo_Boxes;
-IF OBJECT_ID('G_DE_GESTION.Circuitos_mayor_combustible', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Circuitos_mayor_combustible;
-IF OBJECT_ID('G_DE_GESTION.Desgaste', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Desgaste;
-IF OBJECT_ID('G_DE_GESTION.Mayor_velocidad_por_sector ', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Mayor_velocidad_por_sector ;
-IF OBJECT_ID('G_DE_GESTION.Mejor_tiempo_vuelta ', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.Mejor_tiempo_vuelta;
-*/
+IF OBJECT_ID('G_DE_GESTION.v_monto_total_no_cobrado_local', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_monto_total_no_cobrado_local
+IF OBJECT_ID('G_DE_GESTION.v_valor_promedio_envio', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_valor_promedio_envio
+IF OBJECT_ID('G_DE_GESTION.v_monto_total_cupones_utilizados', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_monto_total_cupones_utilizados
+IF OBJECT_ID('G_DE_GESTION.v_promedio_calificacion', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_promedio_calificacion
 
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_pedidos', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_pedidos
 
@@ -164,9 +158,9 @@ CREATE TABLE G_DE_GESTION.BI_hecho_pedidos (
 	tiempo_id DECIMAL(18,0),
 	estado_pedido_id DECIMAL(18,0),
 	cantidad_pedidos DECIMAL(18,0) NOT NULL,
-	pedido_total_servicio DECIMAL(18,0) NOT NULL,
-	pedido_precio_envio DECIMAL(18,0) NOT NULL,
-	pedido_total_cupones DECIMAL(18,0) NOT NULL,
+	pedido_total_servicio DECIMAL(18,2) NOT NULL,
+	pedido_precio_envio DECIMAL(18,2) NOT NULL,
+	pedido_total_cupones DECIMAL(18,2) NOT NULL,
 	pedido_calificacion DECIMAL(18,0) NOT NULL,
 	PRIMARY KEY(dia_id, local_id, rango_horario_id, region_id, rango_etario_id, tiempo_id, estado_pedido_id)
 )
@@ -433,6 +427,69 @@ BEGIN
 		dep.estado_pedido_id
 END
 GO
+
+
+----- Vistas -----
+CREATE VIEW G_DE_GESTION.v_monto_total_no_cobrado_local AS
+	SELECT
+		dl.local_nombre local,
+		dd.dia dia,
+		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0) rango_horario,
+		SUM(hp.pedido_total_servicio) monto_no_cobrado
+	FROM G_DE_GESTION.BI_hecho_pedidos hp
+	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = hp.local_id)
+	JOIN G_DE_GESTION.BI_dim_estado_pedido dep ON (dep.estado_pedido_id = hp.estado_pedido_id)
+	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = hp.dia_id)
+	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (drh.rango_horario_id = hp.rango_horario_id)
+	WHERE dep.estado_pedido_descripcion = 'Estado Mensajeria Cancelado'
+	GROUP BY
+		dl.local_nombre,
+		dd.dia,
+		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0)
+GO
+
+CREATE VIEW G_DE_GESTION.v_monto_total_cupones_utilizados AS
+	SELECT
+		dt.mes,
+		dre.rango_etario,
+		SUM(hp.pedido_total_cupones) monto_total_cupones
+	FROM G_DE_GESTION.BI_hecho_pedidos hp
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hp.tiempo_id)
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario_id = hp.rango_etario_id)
+	GROUP BY
+		dt.mes,
+		dre.rango_etario
+	ORDER BY 1
+GO
+
+CREATE VIEW G_DE_GESTION.v_valor_promedio_envio AS
+	SELECT
+		dt.mes,
+		dr.localidad_descripcion localidad,
+		AVG(hp.pedido_precio_envio) valor_promedio_envio
+	FROM G_DE_GESTION.BI_hecho_pedidos hp
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hp.tiempo_id)
+	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.region_id = hp.region_id)
+	GROUP BY
+		dt.mes,
+		dr.localidad_descripcion
+	ORDER BY 1
+GO
+
+CREATE VIEW G_DE_GESTION.v_promedio_calificacion AS
+	SELECT
+		dt.mes,
+		dl.local_nombre local,
+		AVG(hp.pedido_calificacion) promedio_calificacion
+	FROM G_DE_GESTION.BI_hecho_pedidos hp
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hp.tiempo_id)
+	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = hp.local_id)
+	GROUP BY
+		dt.mes,
+		dl.local_nombre
+	ORDER BY 1
+GO
+
 
 ----- Migracion OLAP -----
 BEGIN TRANSACTION
