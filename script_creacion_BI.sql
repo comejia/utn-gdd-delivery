@@ -11,9 +11,11 @@ IF OBJECT_ID('G_DE_GESTION.v_monto_total_cupones_utilizados', 'V') IS NOT NULL D
 IF OBJECT_ID('G_DE_GESTION.v_promedio_calificacion', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_promedio_calificacion
 IF OBJECT_ID('G_DE_GESTION.v_desvio_promedio_entrega', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_desvio_promedio_entrega
 IF OBJECT_ID('G_DE_GESTION.v_porcentaje_entrega', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_porcentaje_entrega
+IF OBJECT_ID('G_DE_GESTION.v_promedio_mensual_valor_asegurado', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_promedio_mensual_valor_asegurado
 
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_pedidos', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_pedidos
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_entregas', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_entregas
+IF OBJECT_ID('G_DE_GESTION.BI_hecho_mensajeria', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_mensajeria
 
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tiempo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tiempo
 IF OBJECT_ID('G_DE_GESTION.BI_dim_dia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_dia
@@ -190,6 +192,15 @@ CREATE TABLE G_DE_GESTION.BI_hecho_entregas (
 	cantidad_entregas DECIMAL(18,0) NOT NULL,
 	desvio_entrega DECIMAL(18,0) NOT NULL,
 	PRIMARY KEY(tipo_movilidad_id, dia_id, rango_horario_id, tiempo_id, rango_etario_id, region_id)--, estado_pedido_id, estado_envio_mensajeria_id)
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_hecho_mensajeria (
+	tiempo_id DECIMAL(18,0),
+	tipo_paquete_id DECIMAL(18,0),
+	cantidad DECIMAL(18,0) NOT NULL,
+	envio_mensajeria_valor_asegurado DECIMAL(18,2) NOT NULL
+	PRIMARY KEY(tiempo_id, tipo_paquete_id)
 )
 GO
 
@@ -561,6 +572,29 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_hecho_mensajeria AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_hecho_mensajeria(
+		tiempo_id,
+		tipo_paquete_id,
+		cantidad,
+		envio_mensajeria_valor_asegurado
+	)
+	SELECT
+		dt.tiempo_id,
+		dtp.tipo_paquete_id,
+		COUNT(*),
+		SUM(em.envio_mensajeria_valor_asegurado)
+	FROM G_DE_GESTION.envio_mensajeria em
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.anio = YEAR(em.envio_mensajeria_fecha) AND dt.mes = MONTH(em.envio_mensajeria_fecha))
+	JOIN G_DE_GESTION.paquete p ON (p.paquete_id = em.paquete_id)
+	JOIN G_DE_GESTION.BI_dim_tipo_paquete dtp ON (dtp.tipo_paquete_id = p.tipo_paquete_id)
+	GROUP BY
+		dt.tiempo_id,
+		dtp.tipo_paquete_id
+END
+GO
+
 
 ----- Vistas -----
 CREATE VIEW G_DE_GESTION.v_monto_total_no_cobrado_local AS
@@ -656,6 +690,19 @@ CREATE VIEW G_DE_GESTION.v_porcentaje_entrega AS
 		dr.localidad_descripcion	
 GO
 
+CREATE VIEW G_DE_GESTION.v_promedio_mensual_valor_asegurado AS
+	SELECT
+		dt.mes,
+		dtp.tipo_paquete_descripcion tipo_paquete,
+		SUM(hm.envio_mensajeria_valor_asegurado) / SUM(hm.cantidad) promedio_valor_asegurado
+	FROM G_DE_GESTION.BI_hecho_mensajeria hm
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hm.tiempo_id)
+	JOIN G_DE_GESTION.BI_dim_tipo_paquete dtp ON (dtp.tipo_paquete_id = hm.tipo_paquete_id)
+	GROUP BY
+		dt.mes,
+		dtp.tipo_paquete_descripcion
+GO
+
 
 ----- Migracion OLAP -----
 BEGIN TRANSACTION
@@ -675,6 +722,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_BI_hecho_pedidos
 	--EXECUTE G_DE_GESTION.migrar_BI_repartidor
 	EXECUTE G_DE_GESTION.migrar_BI_hecho_entregas
+	EXECUTE G_DE_GESTION.migrar_BI_hecho_mensajeria
 COMMIT TRANSACTION
 GO
 
@@ -695,6 +743,7 @@ DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_pedidos
 --DROP PROCEDURE G_DE_GESTION.migrar_BI_repartidor
 DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_entregas
+DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_mensajeria
 GO
 
 
