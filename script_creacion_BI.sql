@@ -26,6 +26,7 @@ IF OBJECT_ID('G_DE_GESTION.BI_dim_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTI
 IF OBJECT_ID('G_DE_GESTION.BI_dim_region', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_region
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_local
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_medio_pago', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_medio_pago
+IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_reclamo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_reclamo
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_movilidad', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_movilidad
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_paquete', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_paquete
 IF OBJECT_ID('G_DE_GESTION.BI_dim_estado_pedido', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_estado_pedido
@@ -159,6 +160,12 @@ GO
 	region_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_region NOT NULL,
 )
 GO*/
+
+CREATE TABLE G_DE_GESTION.BI_dim_tipo_reclamo (
+	tipo_reclamo_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	tipo_reclamo_descripcion NVARCHAR(50) NOT NULL
+)
+GO
 
 
 ----- Hechos ----
@@ -486,6 +493,14 @@ BEGIN
 END
 GO*/
 
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_reclamo AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_tipo_reclamo(tipo_reclamo_descripcion)
+	SELECT tr.tipo_reclamo_descripcion
+	FROM G_DE_GESTION.tipo_reclamo tr
+END
+GO
+
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_hecho_entregas AS
 BEGIN
 	INSERT INTO G_DE_GESTION.BI_hecho_entregas(
@@ -754,5 +769,6 @@ SELECT * FROM G_DE_GESTION.v_valor_promedio_envio
 SELECT * FROM G_DE_GESTION.v_promedio_calificacion
 SELECT * FROM G_DE_GESTION.v_desvio_promedio_entrega
 SELECT * FROM G_DE_GESTION.v_porcentaje_entrega
+SELECT * FROM G_DE_GESTION.v_promedio_mensual_valor_asegurado
 GO
 */
