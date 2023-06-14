@@ -12,6 +12,9 @@ IF OBJECT_ID('G_DE_GESTION.v_promedio_calificacion', 'V') IS NOT NULL DROP VIEW 
 IF OBJECT_ID('G_DE_GESTION.v_desvio_promedio_entrega', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_desvio_promedio_entrega
 IF OBJECT_ID('G_DE_GESTION.v_porcentaje_entrega', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_porcentaje_entrega
 IF OBJECT_ID('G_DE_GESTION.v_promedio_mensual_valor_asegurado', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_promedio_mensual_valor_asegurado
+IF OBJECT_ID('G_DE_GESTION.v_cantidad_reclamos_recibidos', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_cantidad_reclamos_recibidos
+IF OBJECT_ID('G_DE_GESTION.v_tiempo_promedio_resolucion', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_tiempo_promedio_resolucion
+IF OBJECT_ID('G_DE_GESTION.v_monto_generado_cupones', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_monto_generado_cupones
 
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_pedidos', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_pedidos
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_entregas', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_entregas
@@ -326,7 +329,7 @@ BEGIN
 	INSERT INTO G_DE_GESTION.BI_dim_rango_etario(rango_etario)
 	SELECT DISTINCT
 		(case
-			when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) < 25 then '<25' 
+			when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) < 25 then '<25'
 			when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
 			when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
 			when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) > 55 then '>55'
@@ -335,7 +338,7 @@ BEGIN
 	UNION
 	SELECT DISTINCT
 		(case
-			when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) < 25 then '<25' 
+			when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) < 25 then '<25'
 			when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
 			when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
 			when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) > 55 then '>55'
@@ -344,7 +347,7 @@ BEGIN
 	UNION
 	SELECT DISTINCT
 		(case
-			when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) < 25 then '<25' 
+			when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) < 25 then '<25'
 			when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
 			when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
 			when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) > 55 then '>55'
@@ -467,9 +470,9 @@ BEGIN
 	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (DATEPART(HOUR, p.pedido_fecha) >= drh.rango_horario_inicio
 												AND DATEPART(HOUR, p.pedido_fecha) <= drh.rango_horario_fin)
 	JOIN G_DE_GESTION.usuario u ON (u.usuario_id = p.usuario_id)
-	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario = 
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario =
 					(case
-						when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) < 25 then '<25' 
+						when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) < 25 then '<25'
 						when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
 						when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
 						when DATEDIFF(YEAR, u.usuario_fecha_nac, GETDATE()) > 55 then '>55'
@@ -547,9 +550,9 @@ BEGIN
 	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (DATEPART(HOUR, p.pedido_fecha) >= drh.rango_horario_inicio
 												AND DATEPART(HOUR, p.pedido_fecha) <= drh.rango_horario_fin)
 	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.anio = YEAR(p.pedido_fecha) AND dt.mes = MONTH(p.pedido_fecha))
-	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario = 
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario =
 					(case
-						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) < 25 then '<25' 
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) < 25 then '<25'
 						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
 						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
 						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) > 55 then '>55'
@@ -583,9 +586,9 @@ BEGIN
 	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (DATEPART(HOUR, em.envio_mensajeria_fecha) >= drh.rango_horario_inicio
 												AND DATEPART(HOUR, em.envio_mensajeria_fecha) <= drh.rango_horario_fin)
 	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.anio = YEAR(em.envio_mensajeria_fecha) AND dt.mes = MONTH(em.envio_mensajeria_fecha))
-	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario = 
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario =
 					(case
-						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) < 25 then '<25' 
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) < 25 then '<25'
 						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
 						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
 						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) > 55 then '>55'
@@ -656,9 +659,9 @@ BEGIN
 	JOIN G_DE_GESTION.pedido p ON (p.pedido_nro = r.pedido_nro)
 	JOIN G_DE_GESTION.BI_dim_tipo_reclamo dtr ON (dtr.tipo_reclamo_id = r.tipo_reclamo_id)
 	JOIN G_DE_GESTION.operador_reclamo o ON (o.operador_reclamo_id = r.operador_reclamo_id)
-	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario = 
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario =
 				(case
-					when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) < 25 then '<25' 
+					when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) < 25 then '<25'
 					when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
 					when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
 					when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) > 55 then '>55'
@@ -783,6 +786,51 @@ CREATE VIEW G_DE_GESTION.v_promedio_mensual_valor_asegurado AS
 		dtp.tipo_paquete_descripcion
 GO
 
+CREATE VIEW G_DE_GESTION.v_cantidad_reclamos_recibidos AS
+	SELECT
+		dt.mes,
+		dl.local_nombre local,
+		dd.dia,
+		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0) rango_horario,
+		SUM(hr.cantidad_reclamos) reclamos_recibidos
+	FROM G_DE_GESTION.BI_hecho_reclamos hr
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hr.tiempo_id)
+	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = hr.local_id)
+	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = hr.dia_id)
+	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (drh.rango_horario_id = hr.rango_horario_id)
+	GROUP BY
+		dt.mes,
+		dl.local_nombre,
+		dd.dia,
+		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0)
+GO
+
+CREATE VIEW G_DE_GESTION.v_tiempo_promedio_resolucion AS
+	SELECT
+		dt.mes,
+		dtr.tipo_reclamo_descripcion tipo_reclamo,
+		dre.rango_etario,
+		SUM(hr.tiempo_resolucion) / SUM(hr.cantidad_reclamos) tiempo_promedio_resolucion
+	FROM G_DE_GESTION.BI_hecho_reclamos hr
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hr.tiempo_id)
+	JOIN G_DE_GESTION.BI_dim_tipo_reclamo dtr ON (dtr.tipo_reclamo_id = hr.tipo_reclamo_id)
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario_id = hr.rango_etario_id)
+	GROUP BY
+		dt.mes,
+		dtr.tipo_reclamo_descripcion,
+		dre.rango_etario
+GO
+
+CREATE VIEW G_DE_GESTION.v_monto_generado_cupones AS
+	SELECT
+		dt.mes,
+		SUM(hr.total_cupones) monto_cupon
+	FROM G_DE_GESTION.BI_hecho_reclamos hr
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hr.tiempo_id)
+	GROUP BY
+		dt.mes
+GO
+
 
 ----- Migracion OLAP -----
 BEGIN TRANSACTION
@@ -832,12 +880,16 @@ GO
 
 
 ----- Test Views -----
-/*SELECT * FROM G_DE_GESTION.v_monto_total_no_cobrado_local
+/*
+SELECT * FROM G_DE_GESTION.v_monto_total_no_cobrado_local
 SELECT * FROM G_DE_GESTION.v_monto_total_cupones_utilizados
 SELECT * FROM G_DE_GESTION.v_valor_promedio_envio
 SELECT * FROM G_DE_GESTION.v_promedio_calificacion
 SELECT * FROM G_DE_GESTION.v_desvio_promedio_entrega
 SELECT * FROM G_DE_GESTION.v_porcentaje_entrega
 SELECT * FROM G_DE_GESTION.v_promedio_mensual_valor_asegurado
+SELECT * FROM G_DE_GESTION.v_cantidad_reclamos_recibidos
+SELECT * FROM G_DE_GESTION.v_tiempo_promedio_resolucion
+SELECT * FROM G_DE_GESTION.v_monto_generado_cupones
 GO
 */
