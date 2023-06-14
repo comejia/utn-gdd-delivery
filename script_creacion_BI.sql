@@ -9,14 +9,18 @@ IF OBJECT_ID('G_DE_GESTION.v_monto_total_no_cobrado_local', 'V') IS NOT NULL DRO
 IF OBJECT_ID('G_DE_GESTION.v_valor_promedio_envio', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_valor_promedio_envio
 IF OBJECT_ID('G_DE_GESTION.v_monto_total_cupones_utilizados', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_monto_total_cupones_utilizados
 IF OBJECT_ID('G_DE_GESTION.v_promedio_calificacion', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_promedio_calificacion
+IF OBJECT_ID('G_DE_GESTION.v_desvio_promedio_entrega', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_desvio_promedio_entrega
+IF OBJECT_ID('G_DE_GESTION.v_porcentaje_entrega', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_porcentaje_entrega
 
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_pedidos', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_pedidos
+IF OBJECT_ID('G_DE_GESTION.BI_hecho_entregas', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_entregas
 
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tiempo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tiempo
 IF OBJECT_ID('G_DE_GESTION.BI_dim_dia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_dia
 IF OBJECT_ID('G_DE_GESTION.BI_dim_rango_horario', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_rango_horario
 IF OBJECT_ID('G_DE_GESTION.BI_dim_rango_etario', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_rango_etario
 IF OBJECT_ID('G_DE_GESTION.BI_dim_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_local
+--IF OBJECT_ID('G_DE_GESTION.BI_repartidor', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_repartidor
 IF OBJECT_ID('G_DE_GESTION.BI_dim_region', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_region
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_local
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_medio_pago', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_medio_pago
@@ -146,6 +150,14 @@ CREATE TABLE G_DE_GESTION.BI_dim_estado_reclamo (
 )
 GO
 
+/*CREATE TABLE G_DE_GESTION.BI_repartidor(
+	repartidor_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
+	repartidor_fecha_nac DATE NOT NULL,
+	tipo_movilidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_movilidad NOT NULL,
+	region_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_region NOT NULL,
+)
+GO*/
+
 
 ----- Hechos ----
 CREATE TABLE G_DE_GESTION.BI_hecho_pedidos (
@@ -166,6 +178,20 @@ CREATE TABLE G_DE_GESTION.BI_hecho_pedidos (
 )
 GO
 
+CREATE TABLE G_DE_GESTION.BI_hecho_entregas (
+	tipo_movilidad_id DECIMAL(18,0),
+	dia_id DECIMAL(18,0),
+	rango_horario_id INT,
+	tiempo_id DECIMAL(18,0),
+	rango_etario_id INT,
+	region_id DECIMAL(18,0),
+	--estado_pedido_id DECIMAL(18,0),
+	--estado_envio_mensajeria_id DECIMAL(18,0),
+	cantidad_entregas DECIMAL(18,0) NOT NULL,
+	desvio_entrega DECIMAL(18,0) NOT NULL,
+	PRIMARY KEY(tipo_movilidad_id, dia_id, rango_horario_id, tiempo_id, rango_etario_id, region_id)--, estado_pedido_id, estado_envio_mensajeria_id)
+)
+GO
 
 
 ----- Procedures -----
@@ -428,6 +454,113 @@ BEGIN
 END
 GO
 
+/*CREATE PROCEDURE G_DE_GESTION.migrar_BI_repartidor AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_repartidor(
+		repartidor_fecha_nac,
+		tipo_movilidad_id,
+		region_id
+	)
+	SELECT 
+		r.repartidor_fecha_nac,
+		dtm.tipo_movilidad_id,
+		dr.region_id
+	FROM G_DE_GESTION.repartidor r
+	JOIN G_DE_GESTION.BI_dim_tipo_movilidad dtm ON (dtm.tipo_movilidad_id = r.tipo_movilidad_id)
+	JOIN G_DE_GESTION.localidad_repartidor lr ON (lr.repartidor_id = r.repartidor_id)
+	JOIN G_DE_GESTION.localidad l ON (l.localidad_id = lr.localidad_id)
+	JOIN G_DE_GESTION.provincia p ON (p.provincia_id = l.provincia_id)
+	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.localidad_descripcion = l.localidad_descripcion AND dr.provincia_descripcion = p.provincia_descripcion)
+	ORDER BY r.repartidor_id
+END
+GO*/
+
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_hecho_entregas AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_hecho_entregas(
+		tipo_movilidad_id,
+		dia_id,
+		rango_horario_id,
+		tiempo_id,
+		rango_etario_id,
+		region_id,
+		--estado_pedido_id,
+		--estado_envio_mensajeria_id,
+		cantidad_entregas,
+		desvio_entrega
+	)
+	SELECT
+		dtm.tipo_movilidad_id,
+		dd.dia_id,
+		drh.rango_horario_id,
+		dt.tiempo_id,
+		dre.rango_etario_id,
+		dl.region_id,
+		COUNT(*),
+		SUM(DATEDIFF(MINUTE, p.pedido_fecha, p.pedido_fecha_entrega) / p.pedido_tiempo_estimado_entrega)
+	FROM G_DE_GESTION.pedido p
+	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = p.local_id)
+	JOIN G_DE_GESTION.repartidor r ON (r.repartidor_id = p.repartidor_id)
+	JOIN G_DE_GESTION.BI_dim_tipo_movilidad dtm ON (dtm.tipo_movilidad_id = r.tipo_movilidad_id)
+	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = DATEPART(DW, p.pedido_fecha))
+	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (DATEPART(HOUR, p.pedido_fecha) >= drh.rango_horario_inicio
+												AND DATEPART(HOUR, p.pedido_fecha) <= drh.rango_horario_fin)
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.anio = YEAR(p.pedido_fecha) AND dt.mes = MONTH(p.pedido_fecha))
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario = 
+					(case
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) < 25 then '<25' 
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) > 55 then '>55'
+					end))
+	JOIN G_DE_GESTION.BI_dim_estado_pedido dep ON (dep.estado_pedido_id = p.estado_pedido_id)
+	WHERE dep.estado_pedido_descripcion = 'Estado Mensajeria Entregado'
+	GROUP BY
+		dtm.tipo_movilidad_id,
+		dd.dia_id,
+		drh.rango_horario_id,
+		dt.tiempo_id,
+		dre.rango_etario_id,
+		dl.region_id
+	UNION
+	SELECT
+		dtm.tipo_movilidad_id,
+		dd.dia_id,
+		drh.rango_horario_id,
+		dt.tiempo_id,
+		dre.rango_etario_id,
+		dr.region_id,
+		COUNT(*),
+		SUM(DATEDIFF(MINUTE, em.envio_mensajeria_fecha, em.envio_mensajeria_fecha_entrega) / em.envio_mensajeria_tiempo_estimado)
+	FROM G_DE_GESTION.envio_mensajeria em
+	JOIN G_DE_GESTION.localidad l ON (l.localidad_id = em.localidad_id)
+	JOIN G_DE_GESTION.provincia p ON (p.provincia_id = l.provincia_id)
+	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.localidad_descripcion = l.localidad_descripcion AND dr.provincia_descripcion = p.provincia_descripcion)
+	JOIN G_DE_GESTION.repartidor r ON (r.repartidor_id = em.repartidor_id)
+	JOIN G_DE_GESTION.BI_dim_tipo_movilidad dtm ON (dtm.tipo_movilidad_id = r.tipo_movilidad_id)
+	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = DATEPART(DW, em.envio_mensajeria_fecha))
+	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (DATEPART(HOUR, em.envio_mensajeria_fecha) >= drh.rango_horario_inicio
+												AND DATEPART(HOUR, em.envio_mensajeria_fecha) <= drh.rango_horario_fin)
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.anio = YEAR(em.envio_mensajeria_fecha) AND dt.mes = MONTH(em.envio_mensajeria_fecha))
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario = 
+					(case
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) < 25 then '<25' 
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
+						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) > 55 then '>55'
+					end))
+	JOIN G_DE_GESTION.estado_envio_mensajeria eem ON (eem.estado_envio_mensajeria_id = em.estado_envio_mensajeria_id)
+	WHERE eem.estado_envio_mensajeria_descripcion = 'Estado Mensajeria Entregado'
+	GROUP BY
+		dtm.tipo_movilidad_id,
+		dd.dia_id,
+		drh.rango_horario_id,
+		dt.tiempo_id,
+		dre.rango_etario_id,
+		dr.region_id
+END
+GO
+
 
 ----- Vistas -----
 CREATE VIEW G_DE_GESTION.v_monto_total_no_cobrado_local AS
@@ -487,6 +620,42 @@ CREATE VIEW G_DE_GESTION.v_promedio_calificacion AS
 		dl.local_nombre
 GO
 
+CREATE VIEW G_DE_GESTION.v_desvio_promedio_entrega AS
+	SELECT
+		dtm.tipo_movilidad_descripcion movilidad,
+		dd.dia,
+		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0) rango_horario,
+		AVG(he.desvio_entrega) desvio_promedio
+	FROM G_DE_GESTION.BI_hecho_entregas he
+	JOIN G_DE_GESTION.BI_dim_tipo_movilidad dtm ON (dtm.tipo_movilidad_id = he.tipo_movilidad_id)
+	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = he.dia_id)
+	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (drh.rango_horario_id = he.rango_horario_id)
+	GROUP BY
+		dtm.tipo_movilidad_descripcion,
+		dd.dia,
+		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0)
+GO
+
+CREATE VIEW G_DE_GESTION.v_porcentaje_entrega AS
+	SELECT
+		dt.mes,
+		dre.rango_etario,
+		dr.localidad_descripcion,
+		(SUM(he.cantidad_entregas) / 
+			(SELECT COUNT(*) FROM G_DE_GESTION.BI_hecho_entregas he1
+			JOIN G_DE_GESTION.BI_dim_tiempo dt1 ON (dt1.tiempo_id = he1.tiempo_id)
+			WHERE dt1.anio = dt.anio and dt1.mes = dt.mes)) * 100 AS porcentaje_entrega
+	FROM G_DE_GESTION.BI_hecho_entregas he
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = he.tiempo_id)
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario_id = he.rango_etario_id)
+	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.region_id = he.region_id)
+	GROUP BY
+		dt.mes,
+		dt.anio,
+		dre.rango_etario,
+		dr.localidad_descripcion	
+GO
+
 
 ----- Migracion OLAP -----
 BEGIN TRANSACTION
@@ -504,6 +673,8 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_reclamo
 	EXECUTE G_DE_GESTION.migrar_BI_hecho_pedidos
+	--EXECUTE G_DE_GESTION.migrar_BI_repartidor
+	EXECUTE G_DE_GESTION.migrar_BI_hecho_entregas
 COMMIT TRANSACTION
 GO
 
@@ -522,6 +693,8 @@ DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_pedidos
+--DROP PROCEDURE G_DE_GESTION.migrar_BI_repartidor
+DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_entregas
 GO
 
 
@@ -530,5 +703,7 @@ GO
 SELECT * FROM G_DE_GESTION.v_monto_total_cupones_utilizados
 SELECT * FROM G_DE_GESTION.v_valor_promedio_envio
 SELECT * FROM G_DE_GESTION.v_promedio_calificacion
+SELECT * FROM G_DE_GESTION.v_desvio_promedio_entrega
+SELECT * FROM G_DE_GESTION.v_porcentaje_entrega
 GO
 */
