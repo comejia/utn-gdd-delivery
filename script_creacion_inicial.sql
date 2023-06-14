@@ -15,7 +15,7 @@ IF OBJECT_ID('G_DE_GESTION.reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.reclamo
 IF OBJECT_ID('G_DE_GESTION.tipo_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_reclamo
 IF OBJECT_ID('G_DE_GESTION.operador_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.operador_reclamo
 IF OBJECT_ID('G_DE_GESTION.estado_reclamo') IS NOT NULL DROP TABLE G_DE_GESTION.estado_reclamo
-IF OBJECT_ID('G_DE_GESTION.pedido_cupon') IS NOT NULL DROP TABLE G_DE_GESTION.pedido_cupon
+IF OBJECT_ID('G_DE_GESTION.cupon_pedido') IS NOT NULL DROP TABLE G_DE_GESTION.cupon_pedido
 IF OBJECT_ID('G_DE_GESTION.cupon') IS NOT NULL DROP TABLE G_DE_GESTION.cupon
 IF OBJECT_ID('G_DE_GESTION.tipo_cupon') IS NOT NULL DROP TABLE G_DE_GESTION.tipo_cupon
 IF OBJECT_ID('G_DE_GESTION.producto_pedido') IS NOT NULL DROP TABLE G_DE_GESTION.producto_pedido
@@ -258,9 +258,10 @@ CREATE TABLE G_DE_GESTION.cupon(
 )
 GO
 
-CREATE TABLE G_DE_GESTION.pedido_cupon(
+CREATE TABLE G_DE_GESTION.cupon_pedido(
 	pedido_nro DECIMAL(18,0) REFERENCES G_DE_GESTION.pedido,
 	cupon_id DECIMAL(18,0) REFERENCES G_DE_GESTION.cupon,
+	cupon_pedido_monto DECIMAL(18,2) NOT NULL,
 	PRIMARY KEY(pedido_nro, cupon_id)
 )
 GO
@@ -307,6 +308,7 @@ GO
 CREATE TABLE G_DE_GESTION.cupon_reclamo (
 	cupon_id DECIMAL(18,0) REFERENCES G_DE_GESTION.cupon,
 	reclamo_nro DECIMAL(18,0) REFERENCES G_DE_GESTION.reclamo,
+	cupon_reclamo_monto DECIMAL(18,2) NOT NULL,
 	PRIMARY KEY(cupon_id, reclamo_nro)
 )
 GO
@@ -1082,11 +1084,13 @@ CREATE PROCEDURE G_DE_GESTION.migrar_cupon_reclamo AS
 BEGIN
 	INSERT INTO G_DE_GESTION.cupon_reclamo(
 		cupon_id,
-		reclamo_nro
+		reclamo_nro,
+		cupon_reclamo_monto
 	)
 	SELECT 
 		c.cupon_id,
-		r.reclamo_nro
+		r.reclamo_nro,
+		c.cupon_monto
 	FROM gd_esquema.Maestra m
 	JOIN G_DE_GESTION.reclamo r ON (r.reclamo_nro = m.RECLAMO_NRO)
 	JOIN G_DE_GESTION.cupon c ON (c.cupon_nro = m.CUPON_RECLAMO_NRO)
@@ -1095,15 +1099,17 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE G_DE_GESTION.migrar_pedido_cupon AS
+CREATE PROCEDURE G_DE_GESTION.migrar_cupon_pedido AS
 BEGIN
-	INSERT INTO G_DE_GESTION.pedido_cupon(
+	INSERT INTO G_DE_GESTION.cupon_pedido(
 		pedido_nro,
-		cupon_id
+		cupon_id,
+		cupon_pedido_monto
 	)
 	SELECT DISTINCT
 		p.pedido_nro,
-		c.cupon_id
+		c.cupon_id,
+		c.cupon_monto
 	FROM gd_esquema.Maestra m
 	JOIN G_DE_GESTION.pedido p ON (p.pedido_nro = m.PEDIDO_NRO)
 	JOIN G_DE_GESTION.cupon c ON (c.cupon_nro = m.CUPON_NRO)
@@ -1172,7 +1178,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_producto_local
 	EXECUTE G_DE_GESTION.migrar_producto_pedido
 	EXECUTE G_DE_GESTION.migrar_cupon_reclamo
-	EXECUTE G_DE_GESTION.migrar_pedido_cupon
+	EXECUTE G_DE_GESTION.migrar_cupon_pedido
 	EXECUTE G_DE_GESTION.migrar_localidad_repartidor
 COMMIT TRANSACTION
 GO
@@ -1214,7 +1220,7 @@ DROP PROCEDURE G_DE_GESTION.migrar_horario_local
 DROP PROCEDURE G_DE_GESTION.migrar_producto_local
 DROP PROCEDURE G_DE_GESTION.migrar_producto_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_cupon_reclamo
-DROP PROCEDURE G_DE_GESTION.migrar_pedido_cupon
+DROP PROCEDURE G_DE_GESTION.migrar_cupon_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_localidad_repartidor
 DROP PROCEDURE G_DE_GESTION.migrar_categoria
 DROP PROCEDURE G_DE_GESTION.migrar_estado_reclamo
