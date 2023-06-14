@@ -16,6 +16,7 @@ IF OBJECT_ID('G_DE_GESTION.v_promedio_mensual_valor_asegurado', 'V') IS NOT NULL
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_pedidos', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_pedidos
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_entregas', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_entregas
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_mensajeria', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_mensajeria
+IF OBJECT_ID('G_DE_GESTION.BI_hecho_reclamos', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_reclamos
 
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tiempo', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tiempo
 IF OBJECT_ID('G_DE_GESTION.BI_dim_dia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_dia
@@ -208,6 +209,20 @@ CREATE TABLE G_DE_GESTION.BI_hecho_mensajeria (
 	cantidad DECIMAL(18,0) NOT NULL,
 	envio_mensajeria_valor_asegurado DECIMAL(18,2) NOT NULL
 	PRIMARY KEY(tiempo_id, tipo_paquete_id)
+)
+GO
+
+CREATE TABLE G_DE_GESTION.BI_hecho_reclamos (
+	tiempo_id DECIMAL(18,0),
+	rango_horario_id INT,
+	dia_id DECIMAL(18,0),
+	local_id DECIMAL(18,0),
+	tipo_reclamo_id DECIMAL(18,0),
+	rango_etario_id INT,
+	cantidad_reclamos DECIMAL(18,0) NOT NULL,
+	tiempo_resolucion DECIMAL(18,0) NOT NULL,
+	total_cupones DECIMAL(18,2) NOT NULL,
+	PRIMARY KEY(tiempo_id, rango_horario_id, dia_id, local_id, tipo_reclamo_id, rango_etario_id)
 )
 GO
 
@@ -610,6 +625,56 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_hecho_reclamos AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_hecho_reclamos(
+		tiempo_id,
+		rango_horario_id,
+		dia_id,
+		local_id,
+		tipo_reclamo_id,
+		rango_etario_id,
+		cantidad_reclamos,
+		tiempo_resolucion,
+		total_cupones
+	)
+	SELECT
+		dt.tiempo_id,
+		drh.rango_horario_id,
+		dd.dia_id,
+		p.local_id,
+		dtr.tipo_reclamo_id,
+		dre.rango_etario_id,
+		COUNT(*),
+		SUM(DATEDIFF(MINUTE, r.reclamo_fecha, r.reclamo_fecha_solucion)),
+		SUM(cr.cupon_reclamo_monto)
+	FROM G_DE_GESTION.reclamo r
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.anio = YEAR(r.reclamo_fecha) AND dt.mes = MONTH(r.reclamo_fecha))
+	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (DATEPART(HOUR, r.reclamo_fecha) >= drh.rango_horario_inicio
+												AND DATEPART(HOUR, r.reclamo_fecha) <= drh.rango_horario_fin)
+	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = DATEPART(DW, r.reclamo_fecha))
+	JOIN G_DE_GESTION.pedido p ON (p.pedido_nro = r.pedido_nro)
+	JOIN G_DE_GESTION.BI_dim_tipo_reclamo dtr ON (dtr.tipo_reclamo_id = r.tipo_reclamo_id)
+	JOIN G_DE_GESTION.operador_reclamo o ON (o.operador_reclamo_id = r.operador_reclamo_id)
+	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario = 
+				(case
+					when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) < 25 then '<25' 
+					when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) between 25 and 35 then '25-35'
+					when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
+					when DATEDIFF(YEAR, o.operador_reclamo_fecha_nac, GETDATE()) > 55 then '>55'
+				end))
+	JOIN G_DE_GESTION.cupon_reclamo cr ON (cr.reclamo_nro = r.reclamo_nro)
+
+	GROUP BY
+		dt.tiempo_id,
+		drh.rango_horario_id,
+		dd.dia_id,
+		p.local_id,
+		dtr.tipo_reclamo_id,
+		dre.rango_etario_id
+END
+GO
+
 
 ----- Vistas -----
 CREATE VIEW G_DE_GESTION.v_monto_total_no_cobrado_local AS
@@ -731,6 +796,7 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_BI_dim_tipo_medio_pago
 	EXECUTE G_DE_GESTION.migrar_BI_dim_tipo_movilidad
 	EXECUTE G_DE_GESTION.migrar_BI_dim_tipo_paquete
+	EXECUTE G_DE_GESTION.migrar_BI_dim_tipo_reclamo
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_pedido
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_reclamo
@@ -738,6 +804,7 @@ BEGIN TRANSACTION
 	--EXECUTE G_DE_GESTION.migrar_BI_repartidor
 	EXECUTE G_DE_GESTION.migrar_BI_hecho_entregas
 	EXECUTE G_DE_GESTION.migrar_BI_hecho_mensajeria
+	EXECUTE G_DE_GESTION.migrar_BI_hecho_reclamos
 COMMIT TRANSACTION
 GO
 
@@ -752,6 +819,7 @@ DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_local
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_medio_pago
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_movilidad
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_paquete
+DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_reclamo
@@ -759,6 +827,7 @@ DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_pedidos
 --DROP PROCEDURE G_DE_GESTION.migrar_BI_repartidor
 DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_entregas
 DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_mensajeria
+DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_reclamos
 GO
 
 
