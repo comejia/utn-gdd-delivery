@@ -84,7 +84,6 @@ CREATE TABLE G_DE_GESTION.BI_dim_rango_horario(
 )
 GO
 
-
 CREATE TABLE G_DE_GESTION.BI_dim_rango_etario(
 	rango_etario_id INT IDENTITY(1,1) PRIMARY KEY,
 	rango_etario nvarchar(50) NOT NULL
@@ -113,11 +112,16 @@ GO
 CREATE TABLE G_DE_GESTION.BI_dim_local(
 	local_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	local_nombre NVARCHAR(100) NOT NULL,
-	local_descripcion NVARCHAR(255) NOT NULL,
-	local_direccion NVARCHAR(255) NOT NULL,
-	region_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_region NOT NULL,
-	tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_local
+	--local_descripcion NVARCHAR(255) NOT NULL,
+	--local_direccion NVARCHAR(255) NOT NULL,
+	--region_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_region NOT NULL,
+	--tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_local
+	--localidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.localidad NOT NULL,
 	--categoria_id DECIMAL(18,0) REFERENCES G_DE_GESTION.categoria
+	localidad_descripcion NVARCHAR(255) NOT NULL,
+	provincia_descripcion NVARCHAR(255) NOT NULL,
+	categoria_descripcion NVARCHAR(50),
+	tipo_local_descripcion NVARCHAR(50)
 )
 GO
 
@@ -182,6 +186,7 @@ CREATE TABLE G_DE_GESTION.BI_hecho_pedidos (
 	--tipo_local_id DECIMAL(18,0), PK/FK No se puede migrar por tipo de local ya que no existe la categoria
 	tiempo_id DECIMAL(18,0),
 	estado_pedido_id DECIMAL(18,0),
+	tipo_local_id DECIMAL(18,0), --PK/FK No se puede migrar por tipo de local ya que no existe la categoria
 	cantidad_pedidos DECIMAL(18,0) NOT NULL,
 	pedido_total_servicio DECIMAL(18,2) NOT NULL,
 	pedido_precio_envio DECIMAL(18,2) NOT NULL,
@@ -370,18 +375,22 @@ CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_local AS
 BEGIN
 	INSERT INTO G_DE_GESTION.BI_dim_local(
 		local_nombre,
-		local_descripcion,
-		local_direccion,
-		region_id
+		localidad_descripcion,
+		provincia_descripcion,
+		categoria_descripcion,
+		tipo_local_descripcion
 	)
-	SELECT l.local_nombre,
-		l.local_descripcion,
-		l.local_direccion,
-		r.region_id
+	SELECT
+		l.local_nombre,
+		lo.localidad_descripcion,
+		p.provincia_descripcion,
+		c.categoria_descripcion,
+		tl.tipo_local_descripcion
 	FROM G_DE_GESTION.local l
 	JOIN G_DE_GESTION.localidad lo ON (lo.localidad_id = l.localidad_id)
 	JOIN G_DE_GESTION.provincia p ON (p.provincia_id = lo.provincia_id)
-	JOIN G_DE_GESTION.BI_dim_region r ON (r.localidad_descripcion = lo.localidad_descripcion AND r.provincia_descripcion = p.provincia_descripcion)
+	LEFT JOIN G_DE_GESTION.categoria c ON (c.categoria_id = l.categoria_id)
+	LEFT JOIN G_DE_GESTION.tipo_local tl ON (tl.tipo_local_id = c.tipo_local_id)
 	ORDER BY l.local_id
 END
 GO
@@ -445,6 +454,7 @@ BEGIN
 		rango_etario_id,
 		tiempo_id,
 		estado_pedido_id,
+		tipo_local_id,
 		cantidad_pedidos,
 		pedido_total_servicio,
 		pedido_precio_envio,
@@ -455,10 +465,11 @@ BEGIN
 		dd.dia_id,
 		dl.local_id,
 		drh.rango_horario_id,
-		dl.region_id,
+		dr.region_id,
 		dre.rango_etario_id,
 		dt.tiempo_id,
 		dep.estado_pedido_id,
+		dtl.tipo_local_id,
 		COUNT(*),
 		SUM(p.pedido_total_servicio),
 		SUM(p.pedido_precio_envio),
@@ -469,6 +480,7 @@ BEGIN
 	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = p.local_id)
 	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (DATEPART(HOUR, p.pedido_fecha) >= drh.rango_horario_inicio
 												AND DATEPART(HOUR, p.pedido_fecha) <= drh.rango_horario_fin)
+	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.localidad_descripcion = dl.localidad_descripcion AND dr.provincia_descripcion = dl.provincia_descripcion)
 	JOIN G_DE_GESTION.usuario u ON (u.usuario_id = p.usuario_id)
 	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario =
 					(case
@@ -479,14 +491,16 @@ BEGIN
 					end))
 	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.anio = YEAR(p.pedido_fecha) AND dt.mes = MONTH(p.pedido_fecha))
 	JOIN G_DE_GESTION.BI_dim_estado_pedido dep ON (dep.estado_pedido_id = p.estado_pedido_id)
+	LEFT JOIN G_DE_GESTION.BI_dim_tipo_local dtl ON (dtl.categoria_descripcion = dl.categoria_descripcion AND dtl.tipo_local_descripcion = dl.tipo_local_descripcion)
 	GROUP BY
 		dd.dia_id,
 		dl.local_id,
 		drh.rango_horario_id,
-		dl.region_id,
+		dr.region_id,
 		dre.rango_etario_id,
 		dt.tiempo_id,
-		dep.estado_pedido_id
+		dep.estado_pedido_id,
+		dtl.tipo_local_id
 END
 GO
 
@@ -539,7 +553,7 @@ BEGIN
 		drh.rango_horario_id,
 		dt.tiempo_id,
 		dre.rango_etario_id,
-		dl.region_id,
+		dr.region_id,
 		COUNT(*),
 		SUM(DATEDIFF(MINUTE, p.pedido_fecha, p.pedido_fecha_entrega) / p.pedido_tiempo_estimado_entrega)
 	FROM G_DE_GESTION.pedido p
@@ -557,6 +571,7 @@ BEGIN
 						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) between 35 and 55 then '35-55'
 						when DATEDIFF(YEAR, r.repartidor_fecha_nac, GETDATE()) > 55 then '>55'
 					end))
+	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.localidad_descripcion = dl.localidad_descripcion AND dr.provincia_descripcion = dl.provincia_descripcion)
 	JOIN G_DE_GESTION.BI_dim_estado_pedido dep ON (dep.estado_pedido_id = p.estado_pedido_id)
 	WHERE dep.estado_pedido_descripcion = 'Estado Mensajeria Entregado'
 	GROUP BY
@@ -565,7 +580,7 @@ BEGIN
 		drh.rango_horario_id,
 		dt.tiempo_id,
 		dre.rango_etario_id,
-		dl.region_id
+		dr.region_id
 	UNION
 	SELECT
 		dtm.tipo_movilidad_id,
