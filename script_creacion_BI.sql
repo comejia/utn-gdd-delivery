@@ -160,6 +160,7 @@ CREATE TABLE G_DE_GESTION.BI_hecho_entregas (
 	region_id DECIMAL(18,0),
 	cantidad_entregas DECIMAL(18,0) NOT NULL,
 	desvio_entrega DECIMAL(18,0) NOT NULL,
+	tiempo_estimado DECIMAL(18,2) NOT NULL,
 	PRIMARY KEY(tipo_movilidad_id, dia_id, rango_horario_id, tiempo_id, rango_etario_id, region_id)
 )
 GO
@@ -365,6 +366,14 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_reclamo AS
+BEGIN
+	INSERT INTO G_DE_GESTION.BI_dim_estado_reclamo(estado_reclamo_descripcion)
+	SELECT er.estado_reclamo_descripcion
+	FROM G_DE_GESTION.estado_reclamo er
+END
+GO
+
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_pedido AS
 BEGIN
 	INSERT INTO G_DE_GESTION.BI_dim_estado_pedido(estado_pedido_descripcion)
@@ -381,11 +390,11 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_reclamo AS
+CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_reclamo AS
 BEGIN
-	INSERT INTO G_DE_GESTION.BI_dim_estado_reclamo(estado_reclamo_descripcion)
-	SELECT er.estado_reclamo_descripcion
-	FROM G_DE_GESTION.estado_reclamo er
+	INSERT INTO G_DE_GESTION.BI_dim_tipo_reclamo(tipo_reclamo_descripcion)
+	SELECT tr.tipo_reclamo_descripcion
+	FROM G_DE_GESTION.tipo_reclamo tr
 END
 GO
 
@@ -450,14 +459,6 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_reclamo AS
-BEGIN
-	INSERT INTO G_DE_GESTION.BI_dim_tipo_reclamo(tipo_reclamo_descripcion)
-	SELECT tr.tipo_reclamo_descripcion
-	FROM G_DE_GESTION.tipo_reclamo tr
-END
-GO
-
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_hecho_entregas AS
 BEGIN
 	INSERT INTO G_DE_GESTION.BI_hecho_entregas(
@@ -468,7 +469,8 @@ BEGIN
 		rango_etario_id,
 		region_id,
 		cantidad_entregas,
-		desvio_entrega
+		desvio_entrega,
+		tiempo_estimado
 	)
 	SELECT
 		dtm.tipo_movilidad_id,
@@ -478,7 +480,8 @@ BEGIN
 		dre.rango_etario_id,
 		dr.region_id,
 		COUNT(*),
-		SUM(DATEDIFF(MINUTE, p.pedido_fecha, p.pedido_fecha_entrega) / p.pedido_tiempo_estimado_entrega)
+		SUM(DATEDIFF(MINUTE, p.pedido_fecha, p.pedido_fecha_entrega)),
+		SUM(p.pedido_tiempo_estimado_entrega)
 	FROM G_DE_GESTION.pedido p
 	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = p.local_id)
 	JOIN G_DE_GESTION.repartidor r ON (r.repartidor_id = p.repartidor_id)
@@ -513,7 +516,8 @@ BEGIN
 		dre.rango_etario_id,
 		dr.region_id,
 		COUNT(*),
-		SUM(DATEDIFF(MINUTE, em.envio_mensajeria_fecha, em.envio_mensajeria_fecha_entrega) / em.envio_mensajeria_tiempo_estimado)
+		SUM(DATEDIFF(MINUTE, em.envio_mensajeria_fecha, em.envio_mensajeria_fecha_entrega)),
+		SUM(em.envio_mensajeria_tiempo_estimado)
 	FROM G_DE_GESTION.envio_mensajeria em
 	JOIN G_DE_GESTION.localidad l ON (l.localidad_id = em.localidad_id)
 	JOIN G_DE_GESTION.provincia p ON (p.provincia_id = l.provincia_id)
@@ -680,7 +684,7 @@ CREATE VIEW G_DE_GESTION.v_desvio_promedio_entrega AS
 		dtm.tipo_movilidad_descripcion movilidad,
 		dd.dia,
 		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0) rango_horario,
-		AVG(he.desvio_entrega) desvio_promedio
+		SUM(he.desvio_entrega) / SUM(he.tiempo_estimado) desvio_promedio
 	FROM G_DE_GESTION.BI_hecho_entregas he
 	JOIN G_DE_GESTION.BI_dim_tipo_movilidad dtm ON (dtm.tipo_movilidad_id = he.tipo_movilidad_id)
 	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = he.dia_id)
