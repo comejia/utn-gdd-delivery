@@ -168,9 +168,10 @@ GO
 CREATE TABLE G_DE_GESTION.BI_hecho_mensajeria (
 	tiempo_id DECIMAL(18,0),
 	tipo_paquete_id DECIMAL(18,0),
+	estado_envio_mensajeria_id DECIMAL(18,0),
 	cantidad DECIMAL(18,0) NOT NULL,
 	envio_mensajeria_valor_asegurado DECIMAL(18,2) NOT NULL
-	PRIMARY KEY(tiempo_id, tipo_paquete_id)
+	PRIMARY KEY(tiempo_id, tipo_paquete_id, estado_envio_mensajeria_id)
 )
 GO
 
@@ -552,21 +553,25 @@ BEGIN
 	INSERT INTO G_DE_GESTION.BI_hecho_mensajeria(
 		tiempo_id,
 		tipo_paquete_id,
+		estado_envio_mensajeria_id,
 		cantidad,
 		envio_mensajeria_valor_asegurado
 	)
 	SELECT
 		dt.tiempo_id,
 		dtp.tipo_paquete_id,
+		deem.estado_envio_mensajeria_id,
 		COUNT(*),
 		SUM(em.envio_mensajeria_valor_asegurado)
 	FROM G_DE_GESTION.envio_mensajeria em
 	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.anio = YEAR(em.envio_mensajeria_fecha) AND dt.mes = MONTH(em.envio_mensajeria_fecha))
 	JOIN G_DE_GESTION.paquete p ON (p.paquete_id = em.paquete_id)
 	JOIN G_DE_GESTION.BI_dim_tipo_paquete dtp ON (dtp.tipo_paquete_id = p.tipo_paquete_id)
+	JOIN G_DE_GESTION.BI_dim_estado_envio_mensajeria deem ON (deem.estado_envio_mensajeria_id = em.estado_envio_mensajeria_id)
 	GROUP BY
 		dt.tiempo_id,
-		dtp.tipo_paquete_id
+		dtp.tipo_paquete_id,
+		deem.estado_envio_mensajeria_id
 END
 GO
 
@@ -723,6 +728,8 @@ CREATE VIEW G_DE_GESTION.v_promedio_mensual_valor_asegurado AS
 	FROM G_DE_GESTION.BI_hecho_mensajeria hm
 	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hm.tiempo_id)
 	JOIN G_DE_GESTION.BI_dim_tipo_paquete dtp ON (dtp.tipo_paquete_id = hm.tipo_paquete_id)
+	JOIN G_DE_GESTION.BI_dim_estado_envio_mensajeria deem ON (deem.estado_envio_mensajeria_id = hm.estado_envio_mensajeria_id)
+	WHERE deem.estado_envio_mensajeria_descripcion = 'Estado Mensajeria Entregado'
 	GROUP BY
 		dt.mes,
 		dtp.tipo_paquete_descripcion
