@@ -420,7 +420,7 @@ BEGIN
 		SUM(p.pedido_total_servicio),
 		SUM(p.pedido_precio_envio),
 		SUM(p.pedido_total_cupones),
-		SUM(p.pedido_calificacion) / COUNT(*) -- confirmar cuenta
+		SUM(p.pedido_calificacion)
 	FROM G_DE_GESTION.pedido p
 	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = DATEPART(DW, p.pedido_fecha))
 	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = p.local_id)
@@ -621,7 +621,7 @@ GO
 CREATE VIEW G_DE_GESTION.v_monto_total_no_cobrado_local AS
 	SELECT
 		dl.local_nombre local,
-		dd.dia dia,
+		dd.dia,
 		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0) rango_horario,
 		SUM(hp.pedido_total_servicio) monto_no_cobrado
 	FROM G_DE_GESTION.BI_hecho_pedidos hp
@@ -634,6 +634,19 @@ CREATE VIEW G_DE_GESTION.v_monto_total_no_cobrado_local AS
 		dl.local_nombre,
 		dd.dia,
 		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0)
+GO
+
+CREATE VIEW G_DE_GESTION.v_valor_promedio_envio AS
+	SELECT
+		dt.mes,
+		dr.localidad_descripcion localidad,
+		SUM(hp.pedido_precio_envio) / SUM(hp.cantidad_pedidos) valor_promedio_envio
+	FROM G_DE_GESTION.BI_hecho_pedidos hp
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hp.tiempo_id)
+	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.region_id = hp.region_id)
+	GROUP BY
+		dt.mes,
+		dr.localidad_descripcion
 GO
 
 CREATE VIEW G_DE_GESTION.v_monto_total_cupones_utilizados AS
@@ -649,24 +662,11 @@ CREATE VIEW G_DE_GESTION.v_monto_total_cupones_utilizados AS
 		dre.rango_etario
 GO
 
-CREATE VIEW G_DE_GESTION.v_valor_promedio_envio AS
-	SELECT
-		dt.mes,
-		dr.localidad_descripcion localidad,
-		AVG(hp.pedido_precio_envio) valor_promedio_envio
-	FROM G_DE_GESTION.BI_hecho_pedidos hp
-	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hp.tiempo_id)
-	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.region_id = hp.region_id)
-	GROUP BY
-		dt.mes,
-		dr.localidad_descripcion
-GO
-
 CREATE VIEW G_DE_GESTION.v_promedio_calificacion AS
 	SELECT
 		dt.mes,
 		dl.local_nombre local,
-		AVG(hp.pedido_calificacion) promedio_calificacion
+		SUM(hp.pedido_calificacion) / SUM(hp.cantidad_pedidos) promedio_calificacion
 	FROM G_DE_GESTION.BI_hecho_pedidos hp
 	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hp.tiempo_id)
 	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = hp.local_id)
