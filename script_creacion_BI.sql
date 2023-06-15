@@ -26,7 +26,6 @@ IF OBJECT_ID('G_DE_GESTION.BI_dim_dia', 'U') IS NOT NULL DROP TABLE G_DE_GESTION
 IF OBJECT_ID('G_DE_GESTION.BI_dim_rango_horario', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_rango_horario
 IF OBJECT_ID('G_DE_GESTION.BI_dim_rango_etario', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_rango_etario
 IF OBJECT_ID('G_DE_GESTION.BI_dim_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_local
---IF OBJECT_ID('G_DE_GESTION.BI_repartidor', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_repartidor
 IF OBJECT_ID('G_DE_GESTION.BI_dim_region', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_region
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_local', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_local
 IF OBJECT_ID('G_DE_GESTION.BI_dim_tipo_medio_pago', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_dim_tipo_medio_pago
@@ -53,18 +52,6 @@ CREATE TABLE G_DE_GESTION.BI_dim_dia(
 )
 GO
 
-/*CREATE TABLE G_DE_GESTION.provincia(
-	provincia_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
-	provincia_descripcion NVARCHAR(255) NOT NULL
-)
-GO
-
-CREATE TABLE G_DE_GESTION.localidad(
-	localidad_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
-	localidad_descripcion NVARCHAR(255) NOT NULL,
-	provincia_id DECIMAL(18,0) REFERENCES G_DE_GESTION.provincia
-)
-GO*/
 CREATE TABLE G_DE_GESTION.BI_dim_region(
 	region_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	provincia_descripcion NVARCHAR(255) NOT NULL,
@@ -72,11 +59,6 @@ CREATE TABLE G_DE_GESTION.BI_dim_region(
 )
 GO
 
-/*CREATE TABLE G_DE_GESTION.BI_dim_rango_horario(
-	rango_horario_id INT IDENTITY(1,1) PRIMARY KEY,
-	rango_horario nvarchar(50) NOT NULL
-)
-GO*/
 CREATE TABLE G_DE_GESTION.BI_dim_rango_horario(
 	rango_horario_id INT IDENTITY(1,1) PRIMARY KEY,
 	rango_horario_inicio DECIMAL(18,0) NOT NULL,
@@ -90,18 +72,6 @@ CREATE TABLE G_DE_GESTION.BI_dim_rango_etario(
 )
 GO
 
-/*CREATE TABLE G_DE_GESTION.tipo_local(
-	tipo_local_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
-	tipo_local_descripcion NVARCHAR(50) NOT NULL
-)
-GO
-
-CREATE TABLE G_DE_GESTION.categoria(
-	categoria_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
-	categoria_descripcion NVARCHAR(50),
-	tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.tipo_local
-)
-GO*/
 CREATE TABLE G_DE_GESTION.BI_dim_tipo_local(
 	tipo_local_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	tipo_local_descripcion NVARCHAR(50) NOT NULL,
@@ -112,12 +82,6 @@ GO
 CREATE TABLE G_DE_GESTION.BI_dim_local(
 	local_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	local_nombre NVARCHAR(100) NOT NULL,
-	--local_descripcion NVARCHAR(255) NOT NULL,
-	--local_direccion NVARCHAR(255) NOT NULL,
-	--region_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_region NOT NULL,
-	--tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_local
-	--localidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.localidad NOT NULL,
-	--categoria_id DECIMAL(18,0) REFERENCES G_DE_GESTION.categoria
 	localidad_descripcion NVARCHAR(255) NOT NULL,
 	provincia_descripcion NVARCHAR(255) NOT NULL,
 	categoria_descripcion NVARCHAR(50),
@@ -161,14 +125,6 @@ CREATE TABLE G_DE_GESTION.BI_dim_estado_reclamo (
 )
 GO
 
-/*CREATE TABLE G_DE_GESTION.BI_repartidor(
-	repartidor_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
-	repartidor_fecha_nac DATE NOT NULL,
-	tipo_movilidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_movilidad NOT NULL,
-	region_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_region NOT NULL,
-)
-GO*/
-
 CREATE TABLE G_DE_GESTION.BI_dim_tipo_reclamo (
 	tipo_reclamo_id DECIMAL(18,0) IDENTITY(1,1) PRIMARY KEY,
 	tipo_reclamo_descripcion NVARCHAR(50) NOT NULL
@@ -183,10 +139,9 @@ CREATE TABLE G_DE_GESTION.BI_hecho_pedidos (
 	rango_horario_id INT,
 	region_id DECIMAL(18,0),
 	rango_etario_id INT,
-	--tipo_local_id DECIMAL(18,0), PK/FK No se puede migrar por tipo de local ya que no existe la categoria
 	tiempo_id DECIMAL(18,0),
 	estado_pedido_id DECIMAL(18,0),
-	tipo_local_id DECIMAL(18,0), --PK/FK No se puede migrar por tipo de local ya que no existe la categoria
+	tipo_local_id DECIMAL(18,0),
 	cantidad_pedidos DECIMAL(18,0) NOT NULL,
 	pedido_total_servicio DECIMAL(18,2) NOT NULL,
 	pedido_precio_envio DECIMAL(18,2) NOT NULL,
@@ -203,11 +158,9 @@ CREATE TABLE G_DE_GESTION.BI_hecho_entregas (
 	tiempo_id DECIMAL(18,0),
 	rango_etario_id INT,
 	region_id DECIMAL(18,0),
-	--estado_pedido_id DECIMAL(18,0),
-	--estado_envio_mensajeria_id DECIMAL(18,0),
 	cantidad_entregas DECIMAL(18,0) NOT NULL,
 	desvio_entrega DECIMAL(18,0) NOT NULL,
-	PRIMARY KEY(tipo_movilidad_id, dia_id, rango_horario_id, tiempo_id, rango_etario_id, region_id)--, estado_pedido_id, estado_envio_mensajeria_id)
+	PRIMARY KEY(tipo_movilidad_id, dia_id, rango_horario_id, tiempo_id, rango_etario_id, region_id)
 )
 GO
 
@@ -284,8 +237,6 @@ BEGIN
 END
 GO
 
--- NOTA: preguntar por la migracion. Hay rangos de 1hs?
--- Ayudar: crear CURSOR e implementar logica para leer fila por fila
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_rango_horario AS
 BEGIN
 	DECLARE @apertura DECIMAL(18,0)
@@ -307,16 +258,12 @@ BEGIN
 				SET @next_rango = @next_rango + 2
 				INSERT INTO G_DE_GESTION.BI_dim_rango_horario(rango_horario_inicio, rango_horario_fin)
 				VALUES(@apertura, @next_rango)
-				--VALUES(STR(@apertura, 2, 0) + '-' + STR(@next_rango, 2, 0))
-				--PRINT STR(@apertura, 2, 0) + '-' + STR(@next_rango, 2, 0)
 			END
 			ELSE
 			BEGIN
 				SET @next_rango = @next_rango + 1
 				INSERT INTO G_DE_GESTION.BI_dim_rango_horario(rango_horario_inicio, rango_horario_fin)
 				VALUES(@apertura, @next_rango)
-				--VALUES(STR(@apertura, 2, 0) + '-' + STR(@next_rango, 2, 0))
-				--PRINT STR(@apertura, 2, 0) + '-' + STR(@next_rango, 2, 0)
 			END
 			SET @apertura = @next_rango
 		END
@@ -361,7 +308,6 @@ BEGIN
 END
 GO
 
--- NOTA: ver como migrar esto. Se opta por migrar con los datos de ejemplo en enunciado
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_local AS
 BEGIN
 	INSERT INTO G_DE_GESTION.BI_dim_tipo_local(tipo_local_descripcion, categoria_descripcion)
@@ -504,27 +450,6 @@ BEGIN
 END
 GO
 
-/*CREATE PROCEDURE G_DE_GESTION.migrar_BI_repartidor AS
-BEGIN
-	INSERT INTO G_DE_GESTION.BI_repartidor(
-		repartidor_fecha_nac,
-		tipo_movilidad_id,
-		region_id
-	)
-	SELECT 
-		r.repartidor_fecha_nac,
-		dtm.tipo_movilidad_id,
-		dr.region_id
-	FROM G_DE_GESTION.repartidor r
-	JOIN G_DE_GESTION.BI_dim_tipo_movilidad dtm ON (dtm.tipo_movilidad_id = r.tipo_movilidad_id)
-	JOIN G_DE_GESTION.localidad_repartidor lr ON (lr.repartidor_id = r.repartidor_id)
-	JOIN G_DE_GESTION.localidad l ON (l.localidad_id = lr.localidad_id)
-	JOIN G_DE_GESTION.provincia p ON (p.provincia_id = l.provincia_id)
-	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.localidad_descripcion = l.localidad_descripcion AND dr.provincia_descripcion = p.provincia_descripcion)
-	ORDER BY r.repartidor_id
-END
-GO*/
-
 CREATE PROCEDURE G_DE_GESTION.migrar_BI_dim_tipo_reclamo AS
 BEGIN
 	INSERT INTO G_DE_GESTION.BI_dim_tipo_reclamo(tipo_reclamo_descripcion)
@@ -542,8 +467,6 @@ BEGIN
 		tiempo_id,
 		rango_etario_id,
 		region_id,
-		--estado_pedido_id,
-		--estado_envio_mensajeria_id,
 		cantidad_entregas,
 		desvio_entrega
 	)
@@ -864,7 +787,6 @@ BEGIN TRANSACTION
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
 	EXECUTE G_DE_GESTION.migrar_BI_dim_estado_reclamo
 	EXECUTE G_DE_GESTION.migrar_BI_hecho_pedidos
-	--EXECUTE G_DE_GESTION.migrar_BI_repartidor
 	EXECUTE G_DE_GESTION.migrar_BI_hecho_entregas
 	EXECUTE G_DE_GESTION.migrar_BI_hecho_mensajeria
 	EXECUTE G_DE_GESTION.migrar_BI_hecho_reclamos
@@ -887,7 +809,6 @@ DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_pedido
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_envio_mensajeria
 DROP PROCEDURE G_DE_GESTION.migrar_BI_dim_estado_reclamo
 DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_pedidos
---DROP PROCEDURE G_DE_GESTION.migrar_BI_repartidor
 DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_entregas
 DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_mensajeria
 DROP PROCEDURE G_DE_GESTION.migrar_BI_hecho_reclamos
