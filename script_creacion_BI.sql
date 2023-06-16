@@ -15,6 +15,7 @@ IF OBJECT_ID('G_DE_GESTION.v_promedio_mensual_valor_asegurado', 'V') IS NOT NULL
 IF OBJECT_ID('G_DE_GESTION.v_cantidad_reclamos_recibidos', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_cantidad_reclamos_recibidos
 IF OBJECT_ID('G_DE_GESTION.v_tiempo_promedio_resolucion', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_tiempo_promedio_resolucion
 IF OBJECT_ID('G_DE_GESTION.v_monto_generado_cupones', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_monto_generado_cupones
+IF OBJECT_ID('G_DE_GESTION.v_mayor_cantidad_pedidos', 'V') IS NOT NULL DROP VIEW G_DE_GESTION.v_mayor_cantidad_pedidos
 
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_pedidos', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_pedidos
 IF OBJECT_ID('G_DE_GESTION.BI_hecho_entregas', 'U') IS NOT NULL DROP TABLE G_DE_GESTION.BI_hecho_entregas
@@ -134,14 +135,14 @@ GO
 
 ----- Hechos ----
 CREATE TABLE G_DE_GESTION.BI_hecho_pedidos (
-	dia_id DECIMAL(18,0),
-	local_id DECIMAL(18,0),
-	rango_horario_id INT,
-	region_id DECIMAL(18,0),
-	rango_etario_id INT,
-	tiempo_id DECIMAL(18,0),
-	estado_pedido_id DECIMAL(18,0),
-	tipo_local_id DECIMAL(18,0),
+	dia_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_dia,
+	local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_local,
+	rango_horario_id INT REFERENCES G_DE_GESTION.BI_dim_rango_horario,
+	region_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_region,
+	rango_etario_id INT REFERENCES G_DE_GESTION.BI_dim_rango_etario,
+	tiempo_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tiempo,
+	estado_pedido_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_estado_pedido,
+	tipo_local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_local,
 	cantidad_pedidos DECIMAL(18,0) NOT NULL,
 	pedido_total_servicio DECIMAL(18,2) NOT NULL,
 	pedido_precio_envio DECIMAL(18,2) NOT NULL,
@@ -152,12 +153,12 @@ CREATE TABLE G_DE_GESTION.BI_hecho_pedidos (
 GO
 
 CREATE TABLE G_DE_GESTION.BI_hecho_entregas (
-	tipo_movilidad_id DECIMAL(18,0),
-	dia_id DECIMAL(18,0),
-	rango_horario_id INT,
-	tiempo_id DECIMAL(18,0),
-	rango_etario_id INT,
-	region_id DECIMAL(18,0),
+	tipo_movilidad_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_movilidad,
+	dia_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_dia,
+	rango_horario_id INT REFERENCES G_DE_GESTION.BI_dim_rango_horario,
+	tiempo_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tiempo,
+	rango_etario_id INT REFERENCES G_DE_GESTION.BI_dim_rango_etario,
+	region_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_region,
 	cantidad_entregas DECIMAL(18,0) NOT NULL,
 	desvio_entrega DECIMAL(18,0) NOT NULL,
 	tiempo_estimado DECIMAL(18,2) NOT NULL,
@@ -166,9 +167,9 @@ CREATE TABLE G_DE_GESTION.BI_hecho_entregas (
 GO
 
 CREATE TABLE G_DE_GESTION.BI_hecho_mensajeria (
-	tiempo_id DECIMAL(18,0),
-	tipo_paquete_id DECIMAL(18,0),
-	estado_envio_mensajeria_id DECIMAL(18,0),
+	tiempo_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tiempo,
+	tipo_paquete_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_paquete,
+	estado_envio_mensajeria_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_estado_envio_mensajeria,
 	cantidad DECIMAL(18,0) NOT NULL,
 	envio_mensajeria_valor_asegurado DECIMAL(18,2) NOT NULL
 	PRIMARY KEY(tiempo_id, tipo_paquete_id, estado_envio_mensajeria_id)
@@ -176,12 +177,12 @@ CREATE TABLE G_DE_GESTION.BI_hecho_mensajeria (
 GO
 
 CREATE TABLE G_DE_GESTION.BI_hecho_reclamos (
-	tiempo_id DECIMAL(18,0),
-	rango_horario_id INT,
-	dia_id DECIMAL(18,0),
-	local_id DECIMAL(18,0),
-	tipo_reclamo_id DECIMAL(18,0),
-	rango_etario_id INT,
+	tiempo_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tiempo,
+	rango_horario_id INT REFERENCES G_DE_GESTION.BI_dim_rango_horario,
+	dia_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_dia,
+	local_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_local,
+	tipo_reclamo_id DECIMAL(18,0) REFERENCES G_DE_GESTION.BI_dim_tipo_reclamo,
+	rango_etario_id INT REFERENCES G_DE_GESTION.BI_dim_rango_etario,
 	cantidad_reclamos DECIMAL(18,0) NOT NULL,
 	tiempo_resolucion DECIMAL(18,0) NOT NULL,
 	total_cupones DECIMAL(18,2) NOT NULL,
@@ -659,11 +660,12 @@ CREATE VIEW G_DE_GESTION.v_monto_total_no_cobrado_local AS
 	JOIN G_DE_GESTION.BI_dim_estado_pedido dep ON (dep.estado_pedido_id = hp.estado_pedido_id)
 	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = hp.dia_id)
 	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (drh.rango_horario_id = hp.rango_horario_id)
-	WHERE dep.estado_pedido_descripcion = 'Estado Mensajeria Cancelado'
 	GROUP BY
 		dl.local_nombre,
+		dep.estado_pedido_descripcion,
 		dd.dia,
 		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0)
+	HAVING dep.estado_pedido_descripcion = 'Estado Mensajeria Cancelado'
 GO
 
 CREATE VIEW G_DE_GESTION.v_valor_promedio_envio AS
@@ -859,5 +861,6 @@ SELECT * FROM G_DE_GESTION.v_promedio_mensual_valor_asegurado
 SELECT * FROM G_DE_GESTION.v_cantidad_reclamos_recibidos
 SELECT * FROM G_DE_GESTION.v_tiempo_promedio_resolucion
 SELECT * FROM G_DE_GESTION.v_monto_generado_cupones
+SELECT * FROM G_DE_GESTION.v_mayor_cantidad_pedidos
 GO
 */
