@@ -627,6 +627,27 @@ GO
 
 
 ----- Vistas -----
+CREATE VIEW G_DE_GESTION.v_mayor_cantidad_pedidos AS
+	SELECT TOP 1
+		dd.dia,
+		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0) rango_horario,
+		SUM(hp.cantidad_pedidos) mayor_cantidad
+	FROM G_DE_GESTION.BI_hecho_pedidos hp
+	JOIN G_DE_GESTION.BI_dim_dia dd ON (dd.dia_id = hp.dia_id)
+	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (drh.rango_horario_id = hp.rango_horario_id)
+	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.region_id = hp.region_id)
+	LEFT JOIN G_DE_GESTION.BI_dim_tipo_local dtl ON (dtl.tipo_local_id = hp.tipo_local_id)
+	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hp.tiempo_id)
+	
+	GROUP BY
+		dr.region_id,
+		dtl.tipo_local_id,
+		dt.tiempo_id,
+		dd.dia,
+		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0)
+	ORDER BY 3 DESC
+GO
+
 CREATE VIEW G_DE_GESTION.v_monto_total_no_cobrado_local AS
 	SELECT
 		dl.local_nombre local,
