@@ -671,6 +671,7 @@ GO
 CREATE VIEW G_DE_GESTION.v_valor_promedio_envio AS
 	SELECT
 		dt.mes,
+		dt.anio,
 		dr.localidad_descripcion localidad,
 		SUM(hp.pedido_precio_envio) / SUM(hp.cantidad_pedidos) valor_promedio_envio
 	FROM G_DE_GESTION.BI_hecho_pedidos hp
@@ -678,12 +679,14 @@ CREATE VIEW G_DE_GESTION.v_valor_promedio_envio AS
 	JOIN G_DE_GESTION.BI_dim_region dr ON (dr.region_id = hp.region_id)
 	GROUP BY
 		dt.mes,
+		dt.anio,
 		dr.localidad_descripcion
 GO
 
 CREATE VIEW G_DE_GESTION.v_monto_total_cupones_utilizados AS
 	SELECT
 		dt.mes,
+		dt.anio,
 		dre.rango_etario,
 		SUM(hp.pedido_total_cupones) monto_total_cupones
 	FROM G_DE_GESTION.BI_hecho_pedidos hp
@@ -691,12 +694,14 @@ CREATE VIEW G_DE_GESTION.v_monto_total_cupones_utilizados AS
 	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario_id = hp.rango_etario_id)
 	GROUP BY
 		dt.mes,
+		dt.anio,
 		dre.rango_etario
 GO
 
 CREATE VIEW G_DE_GESTION.v_promedio_calificacion AS
 	SELECT
 		dt.mes,
+		dt.anio,
 		dl.local_nombre local,
 		SUM(hp.pedido_calificacion) / SUM(hp.cantidad_pedidos) promedio_calificacion
 	FROM G_DE_GESTION.BI_hecho_pedidos hp
@@ -704,6 +709,7 @@ CREATE VIEW G_DE_GESTION.v_promedio_calificacion AS
 	JOIN G_DE_GESTION.BI_dim_local dl ON (dl.local_id = hp.local_id)
 	GROUP BY
 		dt.mes,
+		dt.anio,
 		dl.local_nombre
 GO
 
@@ -726,6 +732,7 @@ GO
 CREATE VIEW G_DE_GESTION.v_porcentaje_entrega AS
 	SELECT
 		dt.mes,
+		dt.anio,
 		dre.rango_etario,
 		dr.localidad_descripcion,
 		(SUM(he.cantidad_entregas) / 
@@ -746,6 +753,7 @@ GO
 CREATE VIEW G_DE_GESTION.v_promedio_mensual_valor_asegurado AS
 	SELECT
 		dt.mes,
+		dt.anio,
 		dtp.tipo_paquete_descripcion tipo_paquete,
 		SUM(hm.envio_mensajeria_valor_asegurado) / SUM(hm.cantidad) promedio_valor_asegurado
 	FROM G_DE_GESTION.BI_hecho_mensajeria hm
@@ -755,12 +763,14 @@ CREATE VIEW G_DE_GESTION.v_promedio_mensual_valor_asegurado AS
 	WHERE deem.estado_envio_mensajeria_descripcion = 'Estado Mensajeria Entregado'
 	GROUP BY
 		dt.mes,
+		dt.anio,
 		dtp.tipo_paquete_descripcion
 GO
 
 CREATE VIEW G_DE_GESTION.v_cantidad_reclamos_recibidos AS
 	SELECT
 		dt.mes,
+		dt.anio,
 		dl.local_nombre local,
 		dd.dia,
 		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0) rango_horario,
@@ -772,6 +782,7 @@ CREATE VIEW G_DE_GESTION.v_cantidad_reclamos_recibidos AS
 	JOIN G_DE_GESTION.BI_dim_rango_horario drh ON (drh.rango_horario_id = hr.rango_horario_id)
 	GROUP BY
 		dt.mes,
+		dt.anio,
 		dl.local_nombre,
 		dd.dia,
 		STR(drh.rango_horario_inicio, 2, 0) + '-' + STR(drh.rango_horario_fin, 2, 0)
@@ -780,6 +791,7 @@ GO
 CREATE VIEW G_DE_GESTION.v_tiempo_promedio_resolucion AS
 	SELECT
 		dt.mes,
+		dt.anio,
 		dtr.tipo_reclamo_descripcion tipo_reclamo,
 		dre.rango_etario,
 		SUM(hr.tiempo_resolucion) / SUM(hr.cantidad_reclamos) tiempo_promedio_resolucion
@@ -789,6 +801,7 @@ CREATE VIEW G_DE_GESTION.v_tiempo_promedio_resolucion AS
 	JOIN G_DE_GESTION.BI_dim_rango_etario dre ON (dre.rango_etario_id = hr.rango_etario_id)
 	GROUP BY
 		dt.mes,
+		dt.anio,
 		dtr.tipo_reclamo_descripcion,
 		dre.rango_etario
 GO
@@ -796,11 +809,13 @@ GO
 CREATE VIEW G_DE_GESTION.v_monto_generado_cupones AS
 	SELECT
 		dt.mes,
+		dt.anio,
 		SUM(hr.total_cupones) monto_cupon
 	FROM G_DE_GESTION.BI_hecho_reclamos hr
 	JOIN G_DE_GESTION.BI_dim_tiempo dt ON (dt.tiempo_id = hr.tiempo_id)
 	GROUP BY
-		dt.mes
+		dt.mes,
+		dt.anio
 GO
 
 
